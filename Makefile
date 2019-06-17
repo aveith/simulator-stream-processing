@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for fogStream
 #
 # This file was generated with the command:
-#  opp_makemake --nolink -f --deep -O out -I. -Lout/$$\(CONFIGNAME\)/src -d src -X.
+#  opp_makemake --nolink -f --deep -O out -I. -L/home/veith/Downloads/caffe/build/lib -Lout/$$\(CONFIGNAME\)/src -d src -X.
 #
 
 # Output directory

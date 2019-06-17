@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)fogStream
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -O out -I/usr/include/libxml2 -I.
+#  opp_makemake --make-so -f --deep -O out -I/usr/include/libxml2 -I. -L/home/veith/Downloads/caffe/build/lib
 #
 
 # Name of target to be created (-o option)
@@ -16,7 +16,7 @@ INCLUDE_PATH = -I/usr/include/libxml2 -I.
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS =
+LIBS = $(LDFLAG_LIBPATH)/home/veith/Downloads/caffe/build/lib
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -118,6 +118,9 @@ include $(CONFIGFILE)
 
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = -loppenvir$D $(KERNEL_LIBS) $(SYS_LIBS)
+ifneq ($(TOOLCHAIN_NAME),clangc2)
+LIBS += -Wl,-rpath,$(abspath /home/veith/Downloads/caffe/build/lib)
+endif
 
 COPTS = $(CFLAGS) $(IMPORT_DEFINES)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
