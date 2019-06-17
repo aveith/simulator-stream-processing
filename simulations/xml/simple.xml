@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	  <host id="0" type="1" cpu="9488000" mem="2000000000" cost="0" slots="-1"/>
+	  
+	  <host id="1" type="0" cpu="5692800" mem="1000000000" cost="0" slots="3"/>
+	  
+	  <host id="2" type="2" cpu="6090200000" mem="2000000000000" cost="10" slots="-1"/>
+	  
+	  
+	  <link id ="0" bandwidth="100000000" latency=".00047" src_id="0" dst_id="1" cost="0"/>	
+	  <link id ="1" bandwidth="100000000" latency=".00047" src_id="1" dst_id="0" cost="0"/>
+	  
+	  
+	  	
+	  <link id ="4" bandwidth="10625000" latency=".06675" src_id="0" dst_id="2" cost="0"/>	
+	  <link id ="5" bandwidth="10625000" latency=".06675" src_id="2" dst_id="0" cost="10"/>
+	  
+	  
+</network>
+

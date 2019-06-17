@@ -1,0 +1,62 @@
+// --------------------------------------------------------------------------
+// IBM ILOG CP Optimizer model export file
+// Effective workers: 4
+// --------------------------------------------------------------------------
+
+// ------ Interval-related variables: ---------------------------------------
+
+A0 = intervalVar();
+"Alloc_Task[0][0]" = intervalVar(optional);
+"Alloc_Task[0][1]" = intervalVar(optional);
+"Alloc_Task[0][2]" = intervalVar(optional);
+"Alloc_Task[0][3]" = intervalVar(optional);
+A1 = intervalVar();
+"Alloc_Task[1][0]" = intervalVar(optional);
+"Alloc_Task[1][1]" = intervalVar(optional);
+"Alloc_Task[1][2]" = intervalVar(optional);
+"Alloc_Task[1][3]" = intervalVar(optional);
+A2 = intervalVar();
+"Alloc_Task[2][0]" = intervalVar(optional);
+"Alloc_Task[2][1]" = intervalVar(optional);
+"Alloc_Task[2][2]" = intervalVar(optional);
+"Alloc_Task[2][3]" = intervalVar(optional);
+SequenceVar_22 = sequenceVar(["Alloc_Task[0][0]", "Alloc_Task[1][0]", "Alloc_Task[2][0]"]);
+SequenceVar_25 = sequenceVar(["Alloc_Task[0][1]", "Alloc_Task[1][1]", "Alloc_Task[2][1]"]);
+SequenceVar_28 = sequenceVar(["Alloc_Task[0][2]", "Alloc_Task[1][2]", "Alloc_Task[2][2]"]);
+SequenceVar_31 = sequenceVar(["Alloc_Task[0][3]", "Alloc_Task[1][3]", "Alloc_Task[2][3]"]);
+
+// ------ Expressions: ------------------------------------------------------
+
+IntervalPresence_33 = presenceOf("Alloc_Task[0][0]");
+IntervalPresence_35 = presenceOf("Alloc_Task[1][0]");
+IntervalPresence_36 = presenceOf("Alloc_Task[2][0]");
+IntervalPresence_40 = presenceOf("Alloc_Task[0][1]");
+IntervalPresence_41 = presenceOf("Alloc_Task[1][1]");
+IntervalPresence_42 = presenceOf("Alloc_Task[2][1]");
+IntervalPresence_46 = presenceOf("Alloc_Task[0][2]");
+IntervalPresence_47 = presenceOf("Alloc_Task[1][2]");
+IntervalPresence_48 = presenceOf("Alloc_Task[2][2]");
+IntervalPresence_52 = presenceOf("Alloc_Task[0][3]");
+IntervalPresence_53 = presenceOf("Alloc_Task[1][3]");
+IntervalPresence_54 = presenceOf("Alloc_Task[2][3]");
+
+// ------ Objective: --------------------------------------------------------
+
+minimize(sum([IntervalPresence_33 * 0.021079258010118045313, IntervalPresence_40 * 0.12107935950023417104, IntervalPresence_46 * 0.21063973198529126196, IntervalPresence_52 * 0.31073973347540734258, IntervalPresence_35 * 0.21079258010118043232, IntervalPresence_41 * 0.31079268159129658233, IntervalPresence_40 * -0.10000010149011612226, IntervalPresence_47 * 0.30549639303082243291, IntervalPresence_46 * -0.20010010298023223063, IntervalPresence_53 * 0.40559639452093854128, IntervalPresence_52 * -0.300200104470348339, IntervalPresence_36 * 0.021079258010118045313, IntervalPresence_42 * 0.12107935950023417104, IntervalPresence_41 * -0.10000010149011612226, IntervalPresence_48 * 0.21063973198529126196, IntervalPresence_47 * -0.20010010298023223063, IntervalPresence_54 * 0.31073973347540734258, IntervalPresence_53 * -0.300200104470348339]));
+
+// ------ Constraints: ------------------------------------------------------
+
+alternative(A0, ["Alloc_Task[0][0]", "Alloc_Task[0][1]", "Alloc_Task[0][2]", "Alloc_Task[0][3]"]);
+alternative(A1, ["Alloc_Task[1][0]", "Alloc_Task[1][1]", "Alloc_Task[1][2]", "Alloc_Task[1][3]"]);
+alternative(A2, ["Alloc_Task[2][0]", "Alloc_Task[2][1]", "Alloc_Task[2][2]", "Alloc_Task[2][3]"]);
+noOverlap(SequenceVar_22);
+noOverlap(SequenceVar_25);
+noOverlap(SequenceVar_28);
+noOverlap(SequenceVar_31);
+sum([IntervalPresence_33, IntervalPresence_35, IntervalPresence_36]) <= 1;
+sum([IntervalPresence_40, IntervalPresence_41, IntervalPresence_42]) <= 1;
+sum([IntervalPresence_46, IntervalPresence_47, IntervalPresence_48]) <= 1;
+sum([IntervalPresence_52, IntervalPresence_53, IntervalPresence_54]) <= 1;
+sum([IntervalPresence_41, IntervalPresence_47 * 2, IntervalPresence_53 * 3]) > sum([IntervalPresence_40, IntervalPresence_46 * 2, IntervalPresence_52 * 3]);
+sum([IntervalPresence_42, IntervalPresence_48 * 2, IntervalPresence_54 * 3]) > sum([IntervalPresence_41, IntervalPresence_47 * 2, IntervalPresence_53 * 3]);
+

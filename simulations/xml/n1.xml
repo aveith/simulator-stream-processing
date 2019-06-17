@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	  <host id="0" type="1" cpu="9488000" mem="2000000000" cost="0" slots="-1"/>
+	  <host id="1" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="2" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="3" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="4" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="5" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="6" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="7" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="8" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="9" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="10" type="2" cpu="3045100000" mem="1000000000000" cost="10" slots="-1"/>
+	  <host id="11" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="12" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="13" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="14" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="15" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="16" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="17" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="18" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="19" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="20" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  
+	  <link id ="0" bandwidth="100000000" latency=".00013" src_id="0" dst_id="1" cost="0"/>	
+	  <link id ="1" bandwidth="100000000" latency=".000112" src_id="1" dst_id="0" cost="0"/>
+	  
+	  <link id ="2" bandwidth="100000000" latency=".0001123" src_id="0" dst_id="2" cost="0"/>	
+	  <link id ="3" bandwidth="100000000" latency=".0001" src_id="2" dst_id="0" cost="0"/>
+	  
+	  <link id ="4" bandwidth="100000000" latency=".0002" src_id="0" dst_id="3" cost="0"/>	
+	  <link id ="5" bandwidth="100000000" latency=".0003" src_id="3" dst_id="0" cost="0"/>
+	  	
+	  <link id ="6" bandwidth="100000000" latency=".00011" src_id="0" dst_id="4" cost="0"/>	
+	  <link id ="7" bandwidth="100000000" latency=".00061" src_id="4" dst_id="0" cost="0"/>	  	 
+	  
+	  <link id ="8" bandwidth="100000000" latency=".00014" src_id="0" dst_id="5" cost="0"/>	
+	  <link id ="9" bandwidth="100000000" latency=".00015" src_id="5" dst_id="0" cost="0"/>
+	  
+	  <link id ="10" bandwidth="100000000" latency=".0001" src_id="0" dst_id="6" cost="0"/>	
+	  <link id ="11" bandwidth="100000000" latency=".0001" src_id="6" dst_id="0" cost="0"/>
+	  
+	  <link id ="12" bandwidth="100000000" latency=".00012" src_id="0" dst_id="7" cost="0"/>	
+	  <link id ="13" bandwidth="100000000" latency=".00012" src_id="7" dst_id="0" cost="0"/>
+	  
+	  <link id ="14" bandwidth="1000000000" latency=".08505" src_id="0" dst_id="10" cost="0"/>	
+	  <link id ="15" bandwidth="1000000000" latency=".06505" src_id="10" dst_id="0" cost="10"/>
+	  
+	  <link id ="16" bandwidth="100000000" latency=".00011324" src_id="0" dst_id="8" cost="0"/>	
+	  <link id ="17" bandwidth="100000000" latency=".0001123" src_id="8" dst_id="0" cost="0"/>
+	  
+	  <link id ="18" bandwidth="100000000" latency=".00012" src_id="0" dst_id="9" cost="0"/>	
+	  <link id ="19" bandwidth="100000000" latency=".00001" src_id="9" dst_id="0" cost="0"/>
+	  
+	  <link id ="20" bandwidth="100000000" latency=".00001" src_id="0" dst_id="11" cost="0"/>	
+	  <link id ="21" bandwidth="100000000" latency=".00001" src_id="11" dst_id="0" cost="0"/>
+	  
+	  <link id ="22" bandwidth="100000000" latency=".00041" src_id="0" dst_id="12" cost="0"/>	
+	  <link id ="23" bandwidth="100000000" latency=".00021" src_id="12" dst_id="0" cost="0"/>
+	  
+	  <link id ="24" bandwidth="100000000" latency=".00014" src_id="0" dst_id="13" cost="0"/>	
+	  <link id ="25" bandwidth="100000000" latency=".00051" src_id="13" dst_id="0" cost="0"/>
+	  
+	  <link id ="26" bandwidth="100000000" latency=".00061" src_id="0" dst_id="14" cost="0"/>	
+	  <link id ="27" bandwidth="100000000" latency=".00081" src_id="14" dst_id="0" cost="0"/>
+	  
+	  <link id ="28" bandwidth="100000000" latency=".00051" src_id="0" dst_id="15" cost="0"/>	
+	  <link id ="29" bandwidth="100000000" latency=".00012" src_id="15" dst_id="0" cost="0"/>
+	  
+	  <link id ="30" bandwidth="100000000" latency=".00041" src_id="0" dst_id="16" cost="0"/>	
+	  <link id ="31" bandwidth="100000000" latency=".00011" src_id="16" dst_id="0" cost="0"/>
+	  
+	  <link id ="32" bandwidth="100000000" latency=".00061" src_id="0" dst_id="17" cost="0"/>	
+	  <link id ="33" bandwidth="100000000" latency=".00015" src_id="17" dst_id="0" cost="0"/>
+	  
+	  <link id ="34" bandwidth="100000000" latency=".00001" src_id="0" dst_id="18" cost="0"/>	
+	  <link id ="35" bandwidth="100000000" latency=".00021" src_id="18" dst_id="0" cost="0"/>
+	  
+	  <link id ="36" bandwidth="100000000" latency=".00001" src_id="0" dst_id="19" cost="0"/>	
+	  <link id ="37" bandwidth="100000000" latency=".00071" src_id="19" dst_id="0" cost="0"/>
+	  
+	  <link id ="38" bandwidth="100000000" latency=".00001" src_id="0" dst_id="20" cost="0"/>	
+	  <link id ="39" bandwidth="100000000" latency=".00062" src_id="20" dst_id="0" cost="0"/>
+	  
+	  
+</network>
+

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+	  <host id="0" type="1" cpu="9488000" mem="2000000000" cost="0" slots="-1"/>
+	  
+	  <host id="1" type="0" cpu="5692800" mem="1000000000" cost="0" slots="3"/>
+	  <host id="2" type="0" cpu="5692800" mem="1000000000" cost="0" slots="3"/>
+	  <host id="3" type="0" cpu="5692800" mem="1000000000" cost="0" slots="3"/>
+	  <host id="4" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  <host id="5" type="0" cpu="4744000" mem="1000000000" cost="0" slots="3"/>
+	  
+	  
+	  <host id="6" type="2" cpu="6090200000" mem="2000000000000" cost="10" slots="-1"/>
+	  
+	  
+	  <link id ="0" bandwidth="100000000" latency=".00047" src_id="0" dst_id="1" cost="0"/>	
+	  <link id ="1" bandwidth="100000000" latency=".00047" src_id="1" dst_id="0" cost="0"/>
+	  
+	  <link id ="2" bandwidth="100000000" latency=".00047" src_id="0" dst_id="2" cost="0"/>	
+	  <link id ="3" bandwidth="100000000" latency=".00047" src_id="2" dst_id="0" cost="0"/>
+	  
+	  <link id ="4" bandwidth="100000000" latency=".00047" src_id="0" dst_id="3" cost="0"/>	
+	  <link id ="5" bandwidth="100000000" latency=".00047" src_id="3" dst_id="0" cost="0"/>
+	  	
+	  <link id ="6" bandwidth="100000000" latency=".00047" src_id="0" dst_id="4" cost="0"/>	
+	  <link id ="7" bandwidth="100000000" latency=".00047" src_id="4" dst_id="0" cost="0"/>
+	  
+	  <link id ="8" bandwidth="100000000" latency=".00047" src_id="0" dst_id="5" cost="0"/>	
+	  <link id ="9" bandwidth="100000000" latency=".00047" src_id="5" dst_id="0" cost="0"/>	   	 
+	  	 	 
+	  <link id ="10" bandwidth="10625000" latency=".06675" src_id="0" dst_id="6" cost="0"/>	
+	  <link id ="11" bandwidth="10625000" latency=".06675" src_id="6" dst_id="0" cost="10"/>
+	  
+	  
+</network>
+

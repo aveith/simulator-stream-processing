@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application>
+	  <vertex id="0" selectivity="1" transferrate="1" staterate="1" type="0" computreq="5" memreq="1000" timewindow="0"/>
+	  <vertex id="1" selectivity="1" transferrate="1" staterate="1" type="4" computreq="15" memreq="1000" timewindow="0"/>
+	  <vertex id="2" selectivity="1" transferrate="1" staterate="1" type="1" computreq="15" memreq="1000" timewindow="0"/>
+	  <vertex id="3" selectivity="1" transferrate="1" staterate="1" type="5" computreq="20" memreq="1000" timewindow="0"/>
+	  <vertex id="4" selectivity="1" transferrate="1" staterate="1" type="0" computreq="20" memreq="1000" timewindow="0"/>
+	  <vertex id="5" selectivity="1" transferrate="1" staterate="1" type="0" computreq="60" memreq="1000" timewindow="0"/>
+	  <vertex id="6" selectivity=".5" transferrate=".5" staterate="1" type="0" computreq="50" memreq="1000" timewindow="0"/>
+	  <vertex id="7" selectivity="1" transferrate="1" staterate="1" type="0" computreq="15" memreq="1000" timewindow="0"/>
+	  <vertex id="8" selectivity="1" transferrate="1" staterate="1" type="0" computreq="40" memreq="1000" timewindow="0"/>
+	  <vertex id="9" selectivity="1" transferrate="1" staterate="1" type="0" computreq="50" memreq="1000" timewindow="0"/>
+	  <vertex id="10" selectivity="1" transferrate="1" staterate="1" type="0" computreq="30" memreq="1000" timewindow="0"/>
+	  <vertex id="11" selectivity="1" transferrate="1" staterate="1" type="0" computreq="50" memreq="1000" timewindow="0"/>
+	  <vertex id="12" selectivity="1" transferrate="1" staterate="1" type="0" computreq="15" memreq="1000" timewindow="0"/>
+
+	  <edge src_id ="0" dst_id="1" rho="1"/>
+	  <edge src_id ="1" dst_id="2" rho="1"/>
+	  <edge src_id ="2" dst_id="3" rho="1"/>
+	  <edge src_id ="3" dst_id="4" rho="1"/>
+	  <edge src_id ="3" dst_id="5" rho="1"/>
+	  <edge src_id ="5" dst_id="6" rho="1"/>
+	  <edge src_id ="6" dst_id="7" rho="1"/>
+	  <edge src_id ="7" dst_id="8" rho="1"/>
+	  <edge src_id ="9" dst_id="10" rho="1"/>	
+	  <edge src_id ="10" dst_id="1" rho="1"/>
+	  <edge src_id ="1" dst_id="11" rho="1"/>	
+	  <edge src_id ="11" dst_id="3" rho="1"/>		
+	  <edge src_id ="2" dst_id="12" rho="1"/>
+
+	  <source host_id="7" vertex_id="0" arrivalrate="10000" byteevent="10"/>
+	  <source host_id="5" vertex_id="9" arrivalrate="10000" byteevent="10"/>
+ 	  
+	  <sink host_id="2" vertex_id="4"/>
+	  <sink host_id="10" vertex_id="8"/>
+	  <sink host_id="8" vertex_id="12"/>
+</application>

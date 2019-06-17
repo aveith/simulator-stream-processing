@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="600" viewBox="0 0 62.0 1052.0" width="800"
+    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:12">
+        <ellipse cx="31.0" cy="22.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="25.700000000000045">0</text>
+        <ellipse cx="31.0" cy="94.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="97.70000000000005">1</text>
+        <path
+            d="M31.0 40.1685791015625C31.0 47.8690185546875 31.0 57.02569580078125 31.0 65.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.000066666666214,65.92006666668613 31.00006666666621,75.92006666668613 28.00006666666621,65.92006666668613 35.000066666666214,65.92006666668613" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="166.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="169.70000000000005">2</text>
+        <path
+            d="M31.0 112.1685791015625C31.0 119.8690185546875 31.0 129.02569580078125 31.0 137.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.000066666666214,137.92006666667749 31.00006666666621,147.92006666667749 28.00006666666621,137.92006666667749 35.000066666666214,137.92006666667749" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="238.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="241.70000000000005">3</text>
+        <path
+            d="M31.0 184.1685791015625C31.0 191.8690185546875 31.0 201.02569580078125 31.0 209.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.000066666666214,209.92006666666896 31.00006666666621,219.92006666666896 28.00006666666621,209.92006666666896 35.000066666666214,209.92006666666896" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="310.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="313.70000000000005">4</text>
+        <path
+            d="M31.0 256.1685791015625C31.0 263.8690185546875 31.0 273.02569580078125 31.0 281.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.000066666666214,281.9200666666692 31.00006666666621,291.9200666666692 28.00006666666621,281.9200666666692 35.000066666666214,281.9200666666692" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="382.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="385.70000000000005">5</text>
+        <path
+            d="M31.0 328.1685791015625C31.0 335.8690185546875 31.0 345.02569580078125 31.0 353.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.000066666666356,353.92006666666475 31.00006666666636,363.92006666666475 28.00006666666636,353.92006666666475 35.000066666666356,353.92006666666475" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="454.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="457.70000000000005">6</text>
+        <path
+            d="M31.0 400.1685791015625C31.0 407.8690185546875 31.0 417.02569580078125 31.0 425.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.0000666666665,425.92006666667135 31.0000666666665,435.92006666667135 28.0000666666665,425.92006666667135 35.0000666666665,425.92006666667135" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="526.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="529.7">7</text>
+        <path
+            d="M31.0 472.1685791015625C31.0 479.8690185546875 31.0 489.02569580078125 31.0 497.5833740234375" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.0000666666665,497.9200666666691 31.0000666666665,507.9200666666691 28.0000666666665,497.9200666666691 35.0000666666665,497.9200666666691" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="598.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="601.7">8</text>
+        <path
+            d="M31.0 544.1686096191406C31.0 551.8689880371094 31.0 561.0256958007812 31.0 569.5834045410156" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.0000666666665,569.9200666666668 31.0000666666665,579.9200666666668 28.0000666666665,569.9200666666668 35.0000666666665,569.9200666666668" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="670.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="673.7">9</text>
+        <path
+            d="M31.0 616.1686096191406C31.0 623.8689880371094 31.0 633.0256958007812 31.0 641.5834045410156" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.00006666666664,641.9200666666652 31.00006666666664,651.9200666666652 28.00006666666664,641.9200666666652 35.00006666666664,641.9200666666652" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="742.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="745.7">10</text>
+        <path
+            d="M31.0 688.1686096191406C31.0 695.8689880371094 31.0 705.0256958007812 31.0 713.5834045410156" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.00006666666657,713.9200666666677 31.000066666666566,723.9200666666677 28.000066666666566,713.9200666666677 35.00006666666657,713.9200666666677" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="814.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="817.7">11</text>
+        <path
+            d="M31.0 760.1686096191406C31.0 767.8689880371094 31.0 777.0256958007812 31.0 785.5834045410156" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.00006666666657,785.9200666666671 31.000066666666566,795.9200666666671 28.000066666666566,785.9200666666671 35.00006666666657,785.9200666666671" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="886.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="889.7">12</text>
+        <path
+            d="M31.0 832.1685943603516C31.0 839.8690032958984 31.0 849.0256958007812 31.0 857.5834045410156" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.00006666666657,857.920066666667 31.000066666666566,867.920066666667 28.000066666666566,857.920066666667 35.00006666666657,857.920066666667" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="958.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="961.7">13</text>
+        <path
+            d="M31.0 904.1685943603516C31.0 911.8690032958984 31.0 921.0257034301758 31.0 929.5833969116211" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.00006666666671,929.9200666666665 31.000066666666708,939.9200666666665 28.000066666666708,929.9200666666665 35.00006666666671,929.9200666666665" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <ellipse cx="31.0" cy="1030.0" rx="27.0" ry="18.0" style="fill:none;stroke:rgb(0,0,0);fill-opacity:1.0"/>
+        <text
+            style="font-family:Dialog,serif;font-style:normal;font-weight:normal;font-size:14;fill:rgb(0,0,0)"
+            text-anchor="middle" x="31.0" y="1033.7">14</text>
+        <path
+            d="M31.0 976.1686019897461C31.0 983.8690032958984 31.0 993.0256996154785 31.0 1001.5834007263184" style="fill:none;stroke:rgb(0,0,0)"/>
+        <polygon
+            points="35.000066666666655,1001.9200666666666 31.000066666666655,1011.9200666666666 28.000066666666655,1001.9200666666666 35.000066666666655,1001.9200666666666" style="fill:rgb(0,0,0);stroke:rgb(0,0,0);fill-opacity:1.0"/>
+    </g>
+</svg>
+<!-- Generated by ZVTM (Zoomable Visual Transformation Machine) v0.9.8 http://zvtm.sourceforge.net-->

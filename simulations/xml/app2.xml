@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application>
+	  <vertex id="0" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+	  <vertex id="1" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+	  <vertex id="2" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+	  
+	  <edge src_id ="0" dst_id="1" rho="1"/>
+	  <edge src_id ="1" dst_id="2" rho="1"/>	 
+
+	  <source host_id="7" vertex_id="0" arrivalrate="10000" byteevent="100"/>	  
+ 	  
+	  <sink host_id="2" vertex_id="2"/>	 
+</application>
