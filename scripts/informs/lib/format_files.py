@@ -4,6 +4,7 @@ from tarfile import ReadError
 from util import Config
 from lib.read_files import App
 from lib.read_files import Net
+from lib.save_file import ilp_file
 
 
 def parse_options():
@@ -28,21 +29,12 @@ def parse_options():
     return args
 
 
-def validate_conf_file(conf=Config(), parameters=''):
-    if not conf.getint('reconfiguration', 'reconfig_strategy') in [-1, 1, 2, 3, 4]:
-        print "xxxxxxxxx"
-        return False
-
-def save_ilp_file(app='', net='', dir=''):
-    k = app
-
 def main():
     opts = parse_options()
     conf = Config(opts.parameter)
 
-    # if validate_conf_file(conf):
-    app = App(file=opts.application, seed=opts.seed)
-    net = Net(file=opts.network)
-    save_ilp_file(app=app, net=net, dir=opts.directory)
+    streams, vertices = App(file=opts.application, seed=opts.seed, conf=conf)
+    hosts, hosts_capac, hosts_general, links, links_capac, links_general = Net(file=opts.network)
 
-
+    ilp_file(streams=streams, verices=vertices, hosts=hosts, hosts_capac=hosts_capac, hosts_general=hosts_general,
+             links=links, links_capac=links_capac, links_general=links_general, dir=opts.directory)
