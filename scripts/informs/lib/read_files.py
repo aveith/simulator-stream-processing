@@ -32,14 +32,11 @@ def App(file='', seed=854741, conf=Config()):
         data_pattern = random.uniform(conf.getfloat('general', 'data_pattern_min'),
                                       conf.getfloat('general', 'data_pattern_max'))
         cpu = int(random.uniform(conf.getint('general', 'cpu_min'),
-                             conf.getint('general', 'cpu_max')))
+                                 conf.getint('general', 'cpu_max')))
         mem = int(random.uniform(conf.getint('general', 'mem_min'),
-                             conf.getint('general', 'mem_max')))
-        input_rate = int(random.uniform(conf.getint('general', 'input_rate_min'),
-                                    conf.getint('general', 'input_rate_max')))
-        input_size = int(random.uniform(conf.getint('general', 'input_size_min'),
-                                    conf.getint('general', 'input_size_max')))
-        vertices.append([vert[i], cpu, mem, selectivity, data_pattern, input_rate, input_size])
+                                 conf.getint('general', 'mem_max')))
+
+        vertices.append([vert[i], cpu, mem, selectivity, data_pattern])
 
     return streams, vertices
 
@@ -55,14 +52,16 @@ def Net(file=''):
     links_general = []
     for child in root:
         if child.tag == 'host':
-            hosts_general.append([int(child.get('id')), int(child.get('cpu')), int(child.get('mem')), int(child.get('type'))])
+            hosts_general.append(
+                [int(child.get('id')), int(child.get('cpu')), int(child.get('mem')), int(child.get('type'))])
             if int(child.get('type')) != 1:
                 hosts.append([int(child.get('id'))])
                 hosts_capac.append([int(child.get('cpu')), int(child.get('mem'))])
 
         if child.tag == 'link':
-            links_general.append([int(child.get('id')), int(child.get('src_id')), int(child.get('dst_id')), float(child.get('latency')),
-                          int(child.get('bandwidth'))])
+            links_general.append(
+                [int(child.get('id')), int(child.get('src_id')), int(child.get('dst_id')), float(child.get('latency')),
+                 int(child.get('bandwidth'))])
             links.append([int(child.get('src_id')), int(child.get('dst_id'))])
             links_capac.append([int(child.get('bandwidth'))])
 

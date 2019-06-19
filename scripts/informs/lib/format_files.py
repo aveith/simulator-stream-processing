@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from tarfile import ReadError
 
 from util import Config
 from lib.read_files import App
@@ -36,5 +35,6 @@ def main():
     streams, vertices = App(file=opts.application, seed=opts.seed, conf=conf)
     hosts, hosts_capac, hosts_general, links, links_capac, links_general = Net(file=opts.network)
 
-    ilp_file(streams=streams, verices=vertices, hosts=hosts, hosts_capac=hosts_capac, hosts_general=hosts_general,
-             links=links, links_capac=links_capac, links_general=links_general, dir=opts.directory)
+    ilp_file(streams=streams, vertices=vertices, hosts=hosts, hosts_capac=hosts_capac, hosts_general=hosts_general,
+             links=links, links_capac=links_capac, links_general=links_general, dir=opts.directory, conf=conf,
+             seed=opts.seed)
