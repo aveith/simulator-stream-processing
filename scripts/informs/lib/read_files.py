@@ -60,7 +60,7 @@ def Net(file=''):
 
         if child.tag == 'link':
             links_general.append(
-                [int(child.get('id')), int(child.get('src_id')), int(child.get('dst_id')), float(child.get('latency')),
+                [int(child.get('src_id')), int(child.get('dst_id')), float(child.get('latency')),
                  int(child.get('bandwidth'))])
             links.append([int(child.get('src_id')), int(child.get('dst_id'))])
             links_capac.append([int(child.get('bandwidth'))])

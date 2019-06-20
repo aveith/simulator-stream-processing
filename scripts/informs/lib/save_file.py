@@ -11,8 +11,8 @@ def get_link(src=0, src_type=0, dst=0, dst_type=0, links_general=[]):
     gtw1 = -1
     if src_type == 0:
         for lnk in range(len(links_general)):
-            if links_general[lnk][1] == src:
-                gtw1 = links_general[lnk][2]
+            if links_general[lnk][0] == src:
+                gtw1 = links_general[lnk][1]
                 link.append(links_general[lnk])
                 break
     else:
@@ -21,8 +21,8 @@ def get_link(src=0, src_type=0, dst=0, dst_type=0, links_general=[]):
     gtw2 = -1
     if dst_type == 0:
         for lnk in range(len(links_general)):
-            if links_general[lnk][1] == dst:
-                gtw2 = links_general[lnk][2]
+            if links_general[lnk][0] == dst:
+                gtw2 = links_general[lnk][1]
                 link.append(links_general[lnk])
                 break
     else:
@@ -30,32 +30,47 @@ def get_link(src=0, src_type=0, dst=0, dst_type=0, links_general=[]):
 
     if gtw1 != gtw2:
         for lnk in range(len(links_general)):
-            if links_general[lnk][1] == gtw1 and links_general[lnk][2] == gtw2:
+            if links_general[lnk][0] == gtw1 and links_general[lnk][1] == gtw2:
                 link.append(links_general[lnk])
                 break
 
     min = sys.float_info.max
     for c in range(len(link)):
-        if link[c][4] < min:
-            min = link[c][4]
+        if link[c][3] < min:
+            min = link[c][3]
 
     return [src, dst], [min]
 
 
-def links_simplification(hosts_general=[], links_general=[]):
+def links_simplification(hosts_general=[], links_general=[], hosts=[]):
     links = []
     capac = []
     for src in range(len(hosts_general)):
         if hosts_general[src][3] != 1:
             for dst in range(len(hosts_general)):
                 if hosts_general[dst][3] != 1:
-                    l, c = get_link(src=hosts_general[src][0], src_type=hosts_general[src][3],
-                                    dst=hosts_general[dst][0],
-                                    dst_type=hosts_general[dst][3], links_general=links_general)
-                    links.append(l)
-                    capac.append(c)
+                    if hosts_general[src][0] != hosts_general[dst][0]:
+                        l, c = get_link(src=hosts_general[src][0], src_type=hosts_general[src][3],
+                                        dst=hosts_general[dst][0],
+                                        dst_type=hosts_general[dst][3], links_general=links_general)
+                        links.append(l)
+                        capac.append(c)
 
-    return links, capac
+    links_conv = []
+    for i in range(len(links)):
+        src = -1
+        dst = -1
+        for j in range(len(hosts)):
+            if hosts[j][0] == links[i][0]:
+                src = j
+
+        for j in range(len(hosts)):
+            if hosts[j][0] == links[i][1]:
+                dst = j
+
+        links_conv.append([src, dst])
+
+    return links, capac, links_conv
 
 
 def get_sources(streams=[]):
@@ -119,12 +134,15 @@ def vertice_ordering(streams=[]):
 
 
 def estimate_time_queues(service=0, arrival=0, overhead=0):
-    rho = arrival / service
-    meanTimeinSystem = (1 / (service - arrival)) + overhead
-    meanTimeinQueue = rho / (service - arrival)
+    service = float(service)
+    arrival = float(arrival)
+    overhead = float(overhead)
+    rho = float(arrival / service)
+    meanTimeinSystem = float((1 / (service - arrival)) + overhead)
+    meanTimeinQueue = float(rho / (service - arrival))
 
-    meanNumberofMsgsinSystem = rho / (1 - rho)
-    meanNumberinQueue = rho * arrival / (service - arrival)
+    meanNumberofMsgsinSystem = float(rho / (1 - rho))
+    meanNumberinQueue = float(rho * arrival / (service - arrival))
 
     return [rho, meanTimeinSystem, meanTimeinQueue, meanNumberofMsgsinSystem, meanNumberinQueue]
 
@@ -190,16 +208,27 @@ def get_link_index(src=0, dst=0, links=[]):
             return i
 
 
+def is_valid(vertices=[], host=0, vertex=0):
+    for i in range(len(vertices)):
+        if vertices[i][0] == vertex and vertices[i][1] == host:
+            return False
+    return True
+
+
 def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[], sources=[], vertices=[], links=[],
-              sinks=[]):
+              sinks=[], hosts=[]):
     hard_mapping = []
     for i in range(len(sources)):
-        pos = int(random.uniform(0, vertices.__len__() - 1))
-        hard_mapping.append([sources[i], vertices[pos]])
+        pos = int(random.uniform(0, hosts.__len__() - 1))
+        for j in range(len(hosts)):
+            if hosts[j][0] == hosts[pos][0]:
+                hard_mapping.append([j, sources[i]])
 
     for i in range(len(sinks)):
-        pos = int(random.uniform(0, vertices.__len__() - 1))
-        hard_mapping.append([sinks[i], vertices[pos]])
+        pos = int(random.uniform(0, hosts.__len__() - 1))
+        for j in range(len(hosts)):
+            if hosts[j][0] == hosts[pos][0]:
+                hard_mapping.append([j, sinks[i]])
 
     vertice_costs = []
     stream_costs = []
@@ -213,36 +242,36 @@ def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[],
             if hosts_general[j][3] != 1:
                 for k in range(len(hosts_general)):
                     if hosts_general[k][3] != 1:
-                        src_cpu_cost = 0
-                        src_mem_cost = 0
-                        dst_cpu_cost = 0
-                        dst_mem_cost = 0
-                        if sources.count(stream_reqs[i][0]) > 0:
-                            if hard_mapping.count([stream_reqs[i][0], hosts_general[j][0]]) > 0:
+
+                        if is_valid(vertices=vertice_costs, host=hosts_general[j][0], vertex=src_req[0]):
+                            if sources.count(stream_reqs[i][0]) > 0:
+                                if hard_mapping.count([stream_reqs[i][0], hosts_general[j][0]]) > 0:
+                                    src_queue_values = estimate_time_queues(service=hosts_general[j][1] / src_req[5],
+                                                                            arrival=src_req[6], overhead=0)
+                                    src_cpu_cost = src_queue_values[1]
+                                    src_mem_cost = src_req[4] + src_queue_values[3] * src_req[7]
+                                    vertice_costs.append([src_req[0], hosts_general[j][0], src_cpu_cost, src_mem_cost])
+                            else:
                                 src_queue_values = estimate_time_queues(service=hosts_general[j][1] / src_req[5],
                                                                         arrival=src_req[6], overhead=0)
                                 src_cpu_cost = src_queue_values[1]
                                 src_mem_cost = src_req[4] + src_queue_values[3] * src_req[7]
-                        else:
-                            src_queue_values = estimate_time_queues(service=hosts_general[j][1] / src_req[5],
-                                                                    arrival=src_req[6], overhead=0)
-                            src_cpu_cost = src_queue_values[1]
-                            src_mem_cost = src_req[4] + src_queue_values[3] * src_req[7]
+                                vertice_costs.append([src_req[0], hosts_general[j][0], src_cpu_cost, src_mem_cost])
 
-                        if sinks.count(stream_reqs[i][1]) > 0:
-                            if hard_mapping.count([stream_reqs[i][1], hosts_general[k][0]]) > 0:
+                        if is_valid(vertices=vertice_costs, host=hosts_general[k][0], vertex=dst_req[0]):
+                            if sinks.count(stream_reqs[i][1]) > 0:
+                                if hard_mapping.count([stream_reqs[i][1], hosts_general[k][0]]) > 0:
+                                    dst_queue_values = estimate_time_queues(service=hosts_general[k][1] / dst_req[5],
+                                                                            arrival=dst_req[6], overhead=0)
+                                    dst_cpu_cost = dst_queue_values[1]
+                                    dst_mem_cost = dst_req[4] + dst_queue_values[3] * dst_req[7]
+                                    vertice_costs.append([dst_req[0], hosts_general[k][0], dst_cpu_cost, dst_mem_cost])
+                            else:
                                 dst_queue_values = estimate_time_queues(service=hosts_general[k][1] / dst_req[5],
                                                                         arrival=dst_req[6], overhead=0)
                                 dst_cpu_cost = dst_queue_values[1]
                                 dst_mem_cost = dst_req[4] + dst_queue_values[3] * dst_req[7]
-                        else:
-                            dst_queue_values = estimate_time_queues(service=hosts_general[k][1] / dst_req[5],
-                                                                    arrival=dst_req[6], overhead=0)
-                            dst_cpu_cost = dst_queue_values[1]
-                            dst_mem_cost = dst_req[4] + dst_queue_values[3] * dst_req[7]
-
-                        vertice_costs.append([src_req[0], hosts_general[j][0], src_cpu_cost, src_mem_cost])
-                        vertice_costs.append([dst_req[0], hosts_general[k][0], dst_cpu_cost, dst_mem_cost])
+                                vertice_costs.append([dst_req[0], hosts_general[k][0], dst_cpu_cost, dst_mem_cost])
 
                         if hosts_general[j][0] != hosts_general[k][0]:
 
@@ -251,7 +280,7 @@ def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[],
                                                                                        src=hosts_general[j][0],
                                                                                        dst=hosts_general[k][0],
                                                                                        links=links)][0] / (
-                                                                                   src_req[1]),
+                                                                                   src_req[2]),
                                                                        arrival=src_req[1] * src_req[2], overhead=0)
                             stream_costs.append(
                                 [stream_reqs[i][0], stream_reqs[i][1], hosts_general[j][0], hosts_general[k][0],
@@ -287,19 +316,32 @@ def get_final_costs(vertice_costs=[], stream_costs=[],
     v = []
     s = []
     for i in range(len(hosts)):
+        lv = []
         for j in range(len(vertices)):
+            find = False
             for k in range(len(vertice_costs)):
                 if vertice_costs[k][0] == vertices[j][0] and vertice_costs[k][1] == hosts[i][0]:
-                    v.append([vertice_costs[k][2], vertice_costs[k][3]])
+                    lv.append(vertice_costs[k][2])
+                    find = True
                     break
+            if not find:
+                lv.append(0)
+
+        v.append(lv)
 
     for i in range(len(links)):
+        ls = []
         for j in range(len(streams)):
+            find = False
             for k in range(len(stream_costs)):
                 if stream_costs[k][0] == streams[j][0] and stream_costs[k][1] == streams[j][1] and stream_costs[k][2] == \
                         links[i][0] and stream_costs[k][3] == links[i][1]:
-                    s.append([stream_costs[k][4]])
+                    find = True
+                    ls.append(stream_costs[k][4])
                     break
+            if not find:
+                ls.append(0)
+        s.append(ls)
 
     return v, s
 
@@ -309,16 +351,16 @@ def ilp_file(streams=[], vertices=[], hosts=[], hosts_capac=[], hosts_general=[]
     random.seed(a=seed)
 
     f = open(dir, "w")
-    f.write("%s %s %s %s\n" % (hosts.__len__(), links.__len__(), 2, 1))
+    links_simp, links_cap_simp, links_simp_conv = links_simplification(hosts_general=hosts_general,
+                                                                       links_general=links_general, hosts=hosts)
 
-    links_simp, links_cap_simp = links_simplification(hosts_general=hosts_general, links_general=links_general)
-
-    f.write("%s\n" % str(links_simp).replace('\'', ''))
-    f.write("%s\n" % str(hosts_capac).replace('\'', ''))
-    f.write("%s\n" % str(links_cap_simp).replace('\'', ''))
+    f.write("%s %s %s %s\n" % (hosts_capac.__len__(), links_simp.__len__(), 2, 1))
+    f.write("%s\n" % links_simp_conv)
+    f.write("%s\n" % hosts_capac)
+    f.write("%s\n" % links_cap_simp)
 
     f.write("%s %s\n" % (vertices.__len__(), streams.__len__()))
-    f.write("%s\n" % str(streams).replace('\'', ''))
+    f.write("%s\n" % streams)
     ordered_vertices, sources, sinks = vertice_ordering(streams=streams)
 
     vertice_reqs, stream_reqs = app_requirements(ordered=ordered_vertices, sources=sources.tolist(), streams=streams,
@@ -326,21 +368,21 @@ def ilp_file(streams=[], vertices=[], hosts=[], hosts_capac=[], hosts_general=[]
 
     vertex_reqs, streams_reqs = get_app_requirements(vertice_reqs=vertice_reqs, stream_reqs=stream_reqs,
                                                      vertices=vertices, streams=streams)
-    f.write("%s\n" % str(vertex_reqs).replace('\'', ''))
-    f.write("%s\n" % str(streams_reqs).replace('\'', ''))
+    f.write("%s\n" % vertex_reqs)
+    f.write("%s\n" % streams_reqs)
 
     vertice_costs, stream_costs, hard_mapping = app_costs(vertice_reqs=vertice_reqs, stream_reqs=stream_reqs,
                                                           hosts_general=hosts_general,
                                                           links=links_simp,
                                                           links_capac=links_cap_simp, sources=sources,
-                                                          vertices=vertices, sinks=sinks)
+                                                          vertices=vertices, sinks=sinks, hosts=hosts)
 
     final_vertex_costs, final_stream_costs = get_final_costs(vertice_costs=vertice_costs, stream_costs=stream_costs,
                                                              vertices=vertices, streams=streams, links=links_simp,
                                                              hosts=hosts)
 
-    f.write("%s\n" % str(final_vertex_costs).replace('\'', ''))
-    f.write("%s\n" % str(final_stream_costs).replace('\'', ''))
+    f.write("%s\n" % final_vertex_costs)
+    f.write("%s\n" % final_stream_costs)
 
-    f.write("%s\n" % str(hard_mapping).replace('\'', ''))
+    f.write("%s\n" % hard_mapping)
     f.close()
