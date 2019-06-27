@@ -1,6 +1,6 @@
 ********************************************************************************
 ********************************************************************************
-            DATA STREAM PROCESSIN SIMULATOR ATOP OMNET++ 5.*
+            DATA STREAM PROCESSING DISCRETE EVENT SIMULATOR ATOP OMNET++ 5.*
 ********************************************************************************
 ********************************************************************************
 SUMMARY
@@ -24,14 +24,11 @@ SUMMARY
 2 - ENVIRONMENT DESCRIPTION
 
     1.1 - OVERVIEW
-        The simulator requires as input two files:
-            a) One file describing the Application (.dot or .xml). By passing 
-            the .xml file, the document must have tags for operators and 
-            streams.
+        The simulator requires two files as input:
+            a) Aplication (.dot or .xml)
             b) Network (.xml).
         
-        
-        
+                
         The DSP discrester simulators comprises two main phases:
             a) DSP Configuration (static deployment); and
             c) Application Reconfiguration (dynamic deployment).      
