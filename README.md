@@ -29,9 +29,6 @@ SUMMARY
         
         
         
-        The simulated environment comprises three main phases:
-            a) Configuration of the environment (static deployment);
-            b) Collect statistics from the configuration deployment;
-            c) Reconfiguration of the environment (dynamic deployment).
-        
-        The configuration phase comprises 
+        The DSP discrester simulators comprises two main phases:
+            a) DSP Configuration (static deployment); and
+            c) Application Reconfiguration (dynamic deployment).      
