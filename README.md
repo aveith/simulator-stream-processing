@@ -11,6 +11,7 @@ SUMMARY
    
    
 1 - INSTALLING AND SETUP
+
     1.1 - PREREQUISITES
         - OMNET++ 5.*
         - Python
@@ -21,6 +22,7 @@ SUMMARY
             - make
 
 2 - ENVIRONMENT DESCRIPTION
+
     1.1 - OVERVIEW
         The simulator requires as input two files:
             a) One file describing the Application (.dot or .xml). By passing 
