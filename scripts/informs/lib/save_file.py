@@ -35,11 +35,13 @@ def get_link(src=0, src_type=0, dst=0, dst_type=0, links_general=[]):
                 break
 
     min = sys.float_info.max
+    lat = 0
     for c in range(len(link)):
+        lat += link[c][2]
         if link[c][3] < min:
             min = link[c][3]
 
-    return [src, dst], [min]
+    return [src, dst], [min, lat]
 
 
 def links_simplification(hosts_general=[], links_general=[], hosts=[]):
@@ -137,6 +139,9 @@ def estimate_time_queues(service=0, arrival=0, overhead=0):
     service = float(service)
     arrival = float(arrival)
     overhead = float(overhead)
+
+    if arrival >= service:
+        raise Exception('The system is not steady!')
     rho = float(arrival / service)
     meanTimeinSystem = float((1 / (service - arrival)) + overhead)
     meanTimeinQueue = float(rho / (service - arrival))
@@ -246,12 +251,16 @@ def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[],
                         if is_valid(vertices=vertice_costs, host=hosts_general[j][0], vertex=src_req[0]):
                             if sources.count(stream_reqs[i][0]) > 0:
                                 if hard_mapping.count([stream_reqs[i][0], hosts_general[j][0]]) > 0:
+                                    if float(src_req[6]) >= float(hosts_general[j][1] / src_req[5]):
+                                        raise Exception('The system is not steady! Source node exceeded its capacity!')
                                     src_queue_values = estimate_time_queues(service=hosts_general[j][1] / src_req[5],
                                                                             arrival=src_req[6], overhead=0)
                                     src_cpu_cost = src_queue_values[1]
                                     src_mem_cost = src_req[4] + src_queue_values[3] * src_req[7]
                                     vertice_costs.append([src_req[0], hosts_general[j][0], src_cpu_cost, src_mem_cost])
                             else:
+                                if float(src_req[6]) >= float(hosts_general[j][1] / src_req[5]):
+                                    raise Exception('The system is not steady! Source node exceeded its capacity!')
                                 src_queue_values = estimate_time_queues(service=hosts_general[j][1] / src_req[5],
                                                                         arrival=src_req[6], overhead=0)
                                 src_cpu_cost = src_queue_values[1]
@@ -261,12 +270,22 @@ def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[],
                         if is_valid(vertices=vertice_costs, host=hosts_general[k][0], vertex=dst_req[0]):
                             if sinks.count(stream_reqs[i][1]) > 0:
                                 if hard_mapping.count([stream_reqs[i][1], hosts_general[k][0]]) > 0:
+                                    if float(dst_req[6]) >= float(hosts_general[k][1] / dst_req[5]):
+                                        raise Exception(
+                                            'The system is not steady! Destination node exceeded its capacity (service %s arrival %s)!' % (
+                                                float(hosts_general[k][1] / dst_req[5]), float(dst_req[6])))
+
                                     dst_queue_values = estimate_time_queues(service=hosts_general[k][1] / dst_req[5],
                                                                             arrival=dst_req[6], overhead=0)
                                     dst_cpu_cost = dst_queue_values[1]
                                     dst_mem_cost = dst_req[4] + dst_queue_values[3] * dst_req[7]
                                     vertice_costs.append([dst_req[0], hosts_general[k][0], dst_cpu_cost, dst_mem_cost])
                             else:
+                                if float(dst_req[6]) >= float(hosts_general[k][1] / dst_req[5]):
+                                    raise Exception(
+                                        'The system is not steady! Destination node exceeded its capacity (service %s arrival %s)!' % (
+                                            str(float(hosts_general[k][1] / dst_req[5])), str(float(dst_req[6]))))
+
                                 dst_queue_values = estimate_time_queues(service=hosts_general[k][1] / dst_req[5],
                                                                         arrival=dst_req[6], overhead=0)
                                 dst_cpu_cost = dst_queue_values[1]
@@ -274,6 +293,13 @@ def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[],
                                 vertice_costs.append([dst_req[0], hosts_general[k][0], dst_cpu_cost, dst_mem_cost])
 
                         if hosts_general[j][0] != hosts_general[k][0]:
+                            if float(src_req[1] * src_req[2]) >= float(links_capac[
+                                                                           get_link_index(
+                                                                               src=hosts_general[j][0],
+                                                                               dst=hosts_general[k][0],
+                                                                               links=links)][0] / (
+                                                                               src_req[2])):
+                                raise Exception('The system is not steady! Link exceeded its capacity!')
 
                             stream_queue_values = estimate_time_queues(service=links_capac[
                                                                                    get_link_index(
@@ -281,7 +307,12 @@ def app_costs(vertice_reqs=[], stream_reqs=[], hosts_general=[], links_capac=[],
                                                                                        dst=hosts_general[k][0],
                                                                                        links=links)][0] / (
                                                                                    src_req[2]),
-                                                                       arrival=src_req[1] * src_req[2], overhead=0)
+                                                                       arrival=src_req[1] * src_req[2],
+                                                                       overhead=links_capac[
+                                                                           get_link_index(
+                                                                               src=hosts_general[j][0],
+                                                                               dst=hosts_general[k][0],
+                                                                               links=links)][1])
                             stream_costs.append(
                                 [stream_reqs[i][0], stream_reqs[i][1], hosts_general[j][0], hosts_general[k][0],
                                  stream_queue_values[1]])
@@ -298,8 +329,8 @@ def get_app_requirements(vertice_reqs=[], stream_reqs=[], vertices=[], streams=[
     s = []
     for i in range(len(vertices)):
         for j in range(len(vertice_reqs)):
-            if vertices[i][0] == vertice_reqs[i][0]:
-                v.append([vertice_reqs[i][3], vertice_reqs[i][4]])
+            if vertices[i][0] == vertice_reqs[j][0]:
+                v.append([vertice_reqs[j][3], vertice_reqs[j][4]])
                 break
 
     for i in range(len(streams)):

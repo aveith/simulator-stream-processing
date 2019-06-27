@@ -7,7 +7,7 @@ import pandas as pd
 
 class dataset_configuration:
     def __init__(self, strategy=-1, reconfig_applying_rp=0, app='', configurations=-1, output_file='', dir='',
-                 config_strategy=-1):
+                 config_strategy=-1, action_heuristic=-1):
         self.strategy = strategy
         self.app = app
         self.configurations = configurations
@@ -15,6 +15,7 @@ class dataset_configuration:
         self.output_file = output_file
         self.config_strategy = config_strategy
         self.reconfig_applying_rp = reconfig_applying_rp
+        self.action_heuristic = action_heuristic
 
 
 def build_scenarios(reconfig_strategies=[],
@@ -23,32 +24,35 @@ def build_scenarios(reconfig_strategies=[],
                     reconfig_configurations=0,
                     files_dir='',
                     output_directory='',
-                    config_strategies=[]):
+                    config_strategies=[],
+                    action_heuristic=[]):
     _scenarios = []
 
     for c in range(len(config_strategies)):
         for r in range(len(reconfig_strategies)):
             for ac in range(len(reconfig_applying_rp)):
                 for a in range(len(reconfig_app)):
-                    exp = dataset_configuration()
-                    exp.strategy = reconfig_strategies[r]
-                    exp.reconfig_applying_rp = reconfig_applying_rp[ac]
-                    exp.app = reconfig_app[a]
-                    exp.configurations = reconfig_configurations
-                    exp.dir = files_dir
-                    exp.config_strategy = config_strategies[c]
-                    exp.output_file = output_directory + 'st_' + str(exp.config_strategy) + '_rst_' + str(
-                        exp.strategy) + '_ac_' + str(
-                        exp.reconfig_applying_rp) + '_app_' + exp.app + '.csv'
-                    _scenarios.append(exp)
+                    for ah in range(len(action_heuristic)):
+                        exp = dataset_configuration()
+                        exp.strategy = reconfig_strategies[r]
+                        exp.reconfig_applying_rp = reconfig_applying_rp[ac]
+                        exp.app = reconfig_app[a]
+                        exp.configurations = reconfig_configurations
+                        exp.dir = files_dir
+                        exp.config_strategy = config_strategies[c]
+                        exp.action_heuristic = action_heuristic[ah]
+                        exp.output_file = output_directory + 'st_' + str(exp.config_strategy) + '_rst_' + str(
+                            exp.strategy) + '_rp_' + str(
+                            exp.reconfig_applying_rp) + '_app_' + exp.app + '_ar_' + str(exp.action_heuristic) + '.csv'
+                        _scenarios.append(exp)
 
     return _scenarios
 
 
-def validate_scenario(reconfig_strategy=-1, config_strategy=-1, reconfig_applying_rp=-1, log_sample=pd.DataFrame()):
+def validate_scenario(reconfig_strategy=-1, config_strategy=-1, action_heuristic=-1, log_sample=pd.DataFrame()):
     if not log_sample['strategy'].max() == config_strategy or not log_sample[
                                                                       'reconfig'].max() == reconfig_strategy or not \
-            log_sample['reconfig_applying_rp'].max() == reconfig_applying_rp:
+            log_sample['action_heuristic'].max() == action_heuristic:
         return False
 
     return True
@@ -66,10 +70,11 @@ def create_datasets(dataset=dataset_configuration()):
         for root, dirs, files in os.walk(args.directory):
             for file in files:
                 if file.endswith('.rlog'):
-                    if 'app_' + str(dataset.app) + '_' in root and 'configuration_' + str(c) in root:
+                    if 'app_' + str(dataset.app) + '_' in root and 'configuration_' + str(c) in root and 'rp_' + str(
+                            dataset.reconfig_applying_rp) in root:
                         if validate_scenario(reconfig_strategy=dataset.strategy,
                                              config_strategy=dataset.config_strategy,
-                                             reconfig_applying_rp=dataset.reconfig_applying_rp,
+                                             action_heuristic=dataset.action_heuristic,
                                              log_sample=pd.read_csv(root + '/' + file,
                                                                     sep=';',
                                                                     index_col=None,
@@ -133,6 +138,7 @@ if __name__ == '__main__':
                     reconfig_lambda = [.005, .05]
                     reconfig_epsilon = [.001, .1]
                     reconfig_applying_rp = ['true', 'false']
+                    action_heuristic = [0, 1, 2]
 
                     scenarios = build_scenarios(reconfig_strategies=reconfig_strategies,
                                                 reconfig_app=app,
@@ -140,13 +146,14 @@ if __name__ == '__main__':
                                                 reconfig_applying_rp=reconfig_applying_rp,
                                                 files_dir=args.directory,
                                                 output_directory=args.output,
-                                                config_strategies=config_strategies)
+                                                config_strategies=config_strategies,
+                                                action_heuristic=action_heuristic)
                     if scenarios.__len__() > 0:
-                        create_datasets(scenarios[0])
-                        # pool = Pool(processes=int(args.process))
-                        # pool.map(create_datasets, scenarios)
-                        # pool.close()
-                        # pool.join()
+                        # create_datasets(scenarios[0])
+                        pool = Pool(processes=int(args.process))
+                        pool.map(create_datasets, scenarios)
+                        pool.close()
+                        pool.join()
                 else:
                     print 'Argument -o (output directory) must be filled!'
             else:

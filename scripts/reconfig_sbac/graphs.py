@@ -33,10 +33,12 @@ class stategy_results:
 
 class configurations:
     def __init__(self):
-        self.applications = ['a1', 'a2', 'a3', 'a4', 'a5', 'a10', 'a11', 'a12', 'a13', 'a14', 'app3']
-        self.reconfig_strategies = [1, 4]
+        self.applications = ['a1', 'a2', 'a3', 'a4', 'a5', 'a10', 'a11', 'a12', 'a13', 'app3']
+        self.reconfig_strategies = [0, 1, 2, 3, 4, 5]
         self.config_strategies = [1, 4]
         self.action_heuristic = [0, 1, 2]
+        self.reconfig_applying_rp = [0, 1]
+
         self.config_st_names = ['Cloud-Only', 'Taneja']
         self.reconfig_strategies_name = ['TDTS-SARSA(' + r'$ \lambda $)', 'MCTS-UCT']
 
@@ -49,6 +51,7 @@ def load_files(dir=''):
         for file in files:
             if file.endswith('.csv'):
                 tmp = pd.read_csv(root + '/' + file, sep='\t', index_col=None)
+                tmp['rp'] = 0 if 'rp_false' in file else 1
                 merged_files = merged_files.append(tmp, ignore_index=False)
 
     return merged_files
@@ -62,36 +65,36 @@ def get_scenario_description(scenario=[], conf=configurations()):
     return description.rstrip()
 
 
-def validate_data(conf=configurations(), data=pd.DataFrame()):
-    removed_data = pd.DataFrame()
+def create_dataset(conf=configurations(), data=pd.DataFrame()):
+    dtt = pd.DataFrame()
 
-    valid_data = pd.DataFrame()
-    for strategy in range(len(conf.config_strategies)):
-        for a in range(len(conf.applications)):
-            for ac in range(len(conf.action_heuristic)):
-                base_data = data[(data['action_heuristic'] == conf.action_heuristic[ac]) & (
-                        data['strategy'] == conf.config_strategies[strategy]) & (
-                                         data['app'] == '/dot/' + conf.applications[a] + '.dot')]
+    for a in range(len(conf.applications)):
+        tmp_app = data[(data['app'] == '/dot/' + conf.applications[a] + '.dot')]
 
-                configuration_values = base_data['seed_configuration'].unique()
+        for strategy in range(len(conf.config_strategies)):
+            tmp_st= tmp_app[(tmp_app['strategy'] == conf.config_strategies[strategy])]
 
-                for c in range(len(configuration_values)):
-                    conf_filter = base_data[(base_data['seed_configuration'] == configuration_values[c])]
+            for rcf in range(len(conf.reconfig_strategies)):
+                tmp_rcf = tmp_st[(tmp_st['reconfig'] == conf.reconfig_strategies[rcf])]
 
-                    print 'Filtered data: ' + str(conf_filter.__len__()) + ' Strategies: ' + str(
-                        len(conf.reconfig_strategies) - 1)
+                for rp in range(len(conf.reconfig_applying_rp)):
+                    tmp_rp = tmp_rcf[(tmp_rcf['rp'] == conf.reconfig_applying_rp[rp])]
 
-                    if conf_filter.__len__() == (len(conf.reconfig_strategies)):
-                        print 'Configuration - ' + str(configuration_values[c]) + ' - Valid data: App-' + \
-                              conf.applications[a]
+                    for ac in range(len(conf.action_heuristic)):
+                        tmp_ac = tmp_rp[(tmp_rp['action_heuristic'] == conf.action_heuristic[ac])]
 
-                        valid_data = valid_data.append(conf_filter, ignore_index=False)
-                    else:
-                        print 'Configuration - ' + str(configuration_values[c]) + ' - Invalid data: App-' + \
-                              conf.applications[a]
-                        removed_data = removed_data.append(conf_filter, ignore_index=False)
+                        if tmp_ac.__len__() > 0:
+                            min_value = tmp_ac['best_aggregate_cost'].min()
+                            filtered_data = tmp_ac[
+                                (tmp_ac['best_aggregate_cost'] <= min_value)]
 
-    return valid_data
+                            min_index = filtered_data['test_id'].min()
+
+                            filtered_data = filtered_data[
+                                (filtered_data['test_id'] <= min_index)]
+                            dtt = dtt.append(filtered_data, ignore_index=False)
+
+    return dtt
 
 
 if __name__ == '__main__':
@@ -108,15 +111,17 @@ if __name__ == '__main__':
         if data.__len__() > 0:
             conf = configurations()
 
-            valid_data = validate_data(conf=conf, data=data)
+            # valid_data = create_dataset(conf=conf, data=data)
+            #
+            # print 'From ' + str(data.__len__()) + ' to ' + str(valid_data.__len__())
 
             # valid_data.to_csv('data.csv', sep='\t')
 
             # Diagnostics
-            combination = valid_data.loc[:,
-                                 ['strategy', 'reconfig', 'app', 'action_heuristic', 'best_latency_time']]
+            combination = data.loc[:,
+                          ['strategy', 'reconfig', 'app', 'action_heuristic', 'best_latency_time', 'rp']]
+
+            combination.to_csv('data.csv', sep='\t')
 
             combination = combination.drop_duplicates()
             print combination.groupby(['strategy', 'reconfig', 'action_heuristic']).mean()
-
-

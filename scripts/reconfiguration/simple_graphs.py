@@ -10,6 +10,7 @@ from multiprocessing import Pool
 import argparse
 
 from numpy import _globals
+from plotly import colors
 from pytest import collect
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
@@ -18,8 +19,11 @@ from matplotlib import cm
 import numpy as np
 import pandas as pd
 from scipy._lib._ccallback_c import plus1b_t
+from io import StringIO
 
-plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': 12})
+
+
 # plt.rcParams["figure.figsize"] = (9, 7)
 
 def plot_cdf_app1_app2(metric='', label_x='', label_y='', solutions=[], solutions_label=[], rp=[], markers=[],
@@ -180,7 +184,7 @@ def plot_line(metric='', label_x='', label_y='', solutions=[], solutions_label=[
 
 
 def plot_line_sidebyside(solutions=[], solutions_label=[], rp=[], markers=[], linestyles=[],
-              app=1):
+                         app=1):
     for r in range(len(rp)):
         plt.cla()
         plt.clf()
@@ -215,9 +219,8 @@ def plot_line_sidebyside(solutions=[], solutions_label=[], rp=[], markers=[], li
                                 axis_x = sub_set['iteration'].values
                                 axis_y = (sub_set['best_gain_rate'] * 100).values
 
-
                                 axes[0].plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
-                                          markersize=1, alpha=.8, linestyle=linestyles[s])
+                                             markersize=1, alpha=.8, linestyle=linestyles[s])
 
                                 axes[0].grid(linestyle='dotted')
                                 axes[0].legend().set_visible(True)
@@ -225,40 +228,39 @@ def plot_line_sidebyside(solutions=[], solutions_label=[], rp=[], markers=[], li
                                 axes[0].set_ylabel('Latency Improvement(%)')
                                 axes[0].set_ylim([0, 100])
 
-                                if(app == 2 and r == 1):
+                                if (app == 2 and r == 1):
                                     gg = sub_set[
                                         (sub_set['iteration'] == 9999)]
                                     print 'Latency index ' + solutions_label[s]
                                     print gg
 
-
                                 # axes[0].set_title('Without DH')
 
-                                if app == 1:
-                                    ax2 = plt.axes([0, 0, 1, 1])
-                                    ip = InsetPosition(axes[0], [.1, .55, 0.4, 0.4])
-                                    ax2.set_axes_locator(ip)
-                                    sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
-
-                                    if  rp[r] == 0:
-                                        mark_inset(axes[0], ax2, loc1=1, loc2=4, fc="none", ec='0.5')
-                                        sub_set = sub_set[
-                                            (sub_set['iteration'] > 8100) & (sub_set['iteration'] < 8200)]
-
-                                    elif rp[r] == 1:
-                                        mark_inset(axes[0], ax2, loc1=3, loc2=4, fc="none", ec='0.5')
-                                        sub_set = sub_set[
-                                            (sub_set['iteration'] > 1500) & (sub_set['iteration'] < 2000)]
-
-
-                                    axis_x = sub_set['iteration'].values
-                                    axis_y = (sub_set['best_gain_rate'] * 100).values
-
-                                    ax2.plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
-                                             markersize=1, alpha=.8, linestyle=linestyles[s])
-                                    ax2.set_ylim(35, 37)
-
-
+                                # if app == 1:
+                                #     ax2 = plt.axes([0, 0, 1, 1])
+                                #     ip = InsetPosition(axes[0], [.1, .55, 0.4, 0.4])
+                                #     ax2.set_axes_locator(ip)
+                                #     sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
+                                #
+                                #     if  rp[r] == 0:
+                                #         mark_inset(axes[0], ax2, loc1=1, loc2=4, fc="none", ec='0.5')
+                                #         sub_set = sub_set[
+                                #             (sub_set['iteration'] > 8100) & (sub_set['iteration'] < 8200)]
+                                #
+                                #     elif rp[r] == 1:
+                                #         mark_inset(axes[0], ax2, loc1=3, loc2=4, fc="none", ec='0.5')
+                                #         sub_set = sub_set[
+                                #             (sub_set['iteration'] > 1500) & (sub_set['iteration'] < 2000)]
+                                #
+                                #
+                                #     axis_x = sub_set['iteration'].values
+                                #     axis_y = (sub_set['best_gain_rate'] * 100).values
+                                #
+                                #     ax2.plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
+                                #              markersize=1, alpha=.8, linestyle=linestyles[s])
+                                #     ax2.set_ylim(35, 37)
+                                #
+                                #
                                 sub_set = plot_data.loc[:, ['iteration', 'best_migrations_number_LT']]
 
                                 # print str(tmp['best_gain_rate'].max())
@@ -267,7 +269,7 @@ def plot_line_sidebyside(solutions=[], solutions_label=[], rp=[], markers=[], li
                                 axis_y = sub_set['best_migrations_number_LT'].values
 
                                 axes[1].plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
-                                          markersize=1, alpha=.8, linestyle=linestyles[s])
+                                             markersize=1, alpha=.8, linestyle=linestyles[s])
 
                                 axes[1].grid(linestyle='dotted')
                                 axes[1].legend().set_visible(False)
@@ -286,13 +288,13 @@ def plot_line_sidebyside(solutions=[], solutions_label=[], rp=[], markers=[], li
                 if bfound:
                     break
 
-        # plt.show()
-        plt.tight_layout()
-        plt.savefig('app' + str(app) + '_general_rp_' + str(rp[r]) + '.png')
+        plt.show()
+        # plt.tight_layout()
+        # plt.savefig('app' + str(app) + '_general_rp_' + str(rp[r]) + '.png')
 
 
 def plot_line_sidebyside_bar(solutions=[], solutions_label=[], rp=[], markers=[], linestyles=[],
-              app=1):
+                             app=1):
     for r in range(len(rp)):
         plt.cla()
         plt.clf()
@@ -323,66 +325,63 @@ def plot_line_sidebyside_bar(solutions=[], solutions_label=[], rp=[], markers=[]
                                             tmp['gamma'] == filtered_data['gamma']) & (
                                             tmp['lambda'] == filtered_data['lambda']) & (
                                             tmp['epsilon'] == filtered_data['epsilon'])]
-                                sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
+                                sub_set = plot_data.loc[:, ['time', 'best_gain_rate']]
 
-                                axis_x = sub_set['iteration'].values
+                                axis_x = sub_set['time'].values
                                 axis_y = (sub_set['best_gain_rate'] * 100).values
 
-
                                 axes[0].plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
-                                          markersize=1, alpha=.8, linestyle=linestyles[s])
+                                             markersize=1, alpha=.8, linestyle=linestyles[s])
 
                                 axes[0].grid(linestyle='dotted')
                                 axes[0].legend().set_visible(True)
                                 axes[0].set_xlabel('Number of Simulations')
                                 axes[0].set_ylabel('Latency Improvement(%)')
                                 axes[0].set_ylim([0, 100])
+                                axes[0].set_xlim([0, 40000])
 
-                                if(app == 2 and r == 1):
-                                    gg = sub_set[
-                                        (sub_set['iteration'] == 9999)]
-                                    # print 'Latency index ' + solutions_label[s]
-                                    # print gg
+                                # if(app == 2 and r == 1):
+                                #     gg = sub_set[
+                                #         (sub_set['iteration'] == 9999)]
+                                # print 'Latency index ' + solutions_label[s]
+                                # print gg
 
-                                if app == 1:
-                                    ax2 = plt.axes([0, 0, 1, 1])
-                                    ip = InsetPosition(axes[0], [.1, .55, 0.4, 0.4])
-                                    ax2.set_axes_locator(ip)
-                                    sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
+                                # if app == 1:
+                                #     ax2 = plt.axes([0, 0, 1, 1])
+                                #     ip = InsetPosition(axes[0], [.1, .55, 0.4, 0.4])
+                                #     ax2.set_axes_locator(ip)
+                                #     sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
+                                #
+                                #     if  rp[r] == 0:
+                                #         mark_inset(axes[0], ax2, loc1=1, loc2=4, fc="none", ec='0.5')
+                                #         sub_set = sub_set[
+                                #             (sub_set['iteration'] > 8100) & (sub_set['iteration'] < 8200)]
+                                #
+                                #     elif rp[r] == 1:
+                                #         mark_inset(axes[0], ax2, loc1=3, loc2=4, fc="none", ec='0.5')
+                                #         sub_set = sub_set[
+                                #             (sub_set['iteration'] > 1500) & (sub_set['iteration'] < 2000)]
 
-                                    if  rp[r] == 0:
-                                        mark_inset(axes[0], ax2, loc1=1, loc2=4, fc="none", ec='0.5')
-                                        sub_set = sub_set[
-                                            (sub_set['iteration'] > 8100) & (sub_set['iteration'] < 8200)]
+                                # axis_x = sub_set['iteration'].values
+                                # axis_y = (sub_set['best_gain_rate'] * 100).values
+                                #
+                                # ax2.plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
+                                #          markersize=1, alpha=.8, linestyle=linestyles[s])
+                                # ax2.set_ylim(35, 37)
 
-                                    elif rp[r] == 1:
-                                        mark_inset(axes[0], ax2, loc1=3, loc2=4, fc="none", ec='0.5')
-                                        sub_set = sub_set[
-                                            (sub_set['iteration'] > 1500) & (sub_set['iteration'] < 2000)]
-
-
-                                    axis_x = sub_set['iteration'].values
-                                    axis_y = (sub_set['best_gain_rate'] * 100).values
-
-                                    ax2.plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
-                                             markersize=1, alpha=.8, linestyle=linestyles[s])
-                                    ax2.set_ylim(35, 37)
-
-                                if app == 2 :
-                                    ax2 = plt.axes([0, 0, 1, 1])
-                                    ip = InsetPosition(axes[0], [.57, .1, 0.3, 0.3])
-                                    ax2.set_axes_locator(ip)
-                                    sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
-                                    mark_inset(axes[0], ax2, loc1=3, loc2=4, fc="none", ec='0.5')
-                                    sub_set = sub_set[
-                                        (sub_set['iteration'] > 9000) & (sub_set['iteration'] < 10000)]
-                                    axis_x = sub_set['iteration'].values
-                                    axis_y = (sub_set['best_gain_rate'] * 100).values
-
-                                    ax2.plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
-                                             markersize=1, alpha=.8, linestyle=linestyles[s])
-
-
+                                # if app == 2 :
+                                #     ax2 = plt.axes([0, 0, 1, 1])
+                                #     ip = InsetPosition(axes[0], [.57, .1, 0.3, 0.3])
+                                #     ax2.set_axes_locator(ip)
+                                #     sub_set = plot_data.loc[:, ['iteration', 'best_gain_rate']]
+                                #     mark_inset(axes[0], ax2, loc1=3, loc2=4, fc="none", ec='0.5')
+                                #     sub_set = sub_set[
+                                #         (sub_set['iteration'] > 9000) & (sub_set['iteration'] < 10000)]
+                                #     axis_x = sub_set['iteration'].values
+                                #     axis_y = (sub_set['best_gain_rate'] * 100).values
+                                #
+                                #     ax2.plot(axis_x, axis_y, label=solutions_label[s], marker=markers[s],
+                                #              markersize=1, alpha=.8, linestyle=linestyles[s])
 
                                 sub_set = plot_data.loc[:, ['iteration', 'best_migrations_number_LT']]
                                 gg = sub_set[
@@ -408,7 +407,7 @@ def plot_line_sidebyside_bar(solutions=[], solutions_label=[], rp=[], markers=[]
         bars = axes[1].patches
         axes[1].legend().set_visible(False)
 
-        for bar, color in zip(bars, ('#1f77b4', '#ff7f0e', '#2ca02c', '#d62728')):#
+        for bar, color in zip(bars, ('#1f77b4', '#ff7f0e', '#2ca02c', '#d62728')):  #
             bar.set_facecolor(color)
 
         for bar, pattern in zip(bars, ('-', '+', 'x', '\\', '*', 'o', 'O', '.')):
@@ -421,9 +420,224 @@ def plot_line_sidebyside_bar(solutions=[], solutions_label=[], rp=[], markers=[]
         axes[1].legend().set_visible(False)
         axes[1].set_xlabel('')
         axes[1].set_ylabel('Number of Operator Migrations')
+        plt.show()
+        # plt.tight_layout()
+        # plt.savefig('app' + str(app) + '_general_rp_' + str(rp[r]) + '.png')
+
+
+def plot_bar_sidebyside_bar(solutions=[], solutions_label=[], rp=[], markers=[], linestyles=[]):
+    solutions_label = ['MCTS-Best-UCT', 'TDTS-SARSA(' + r'$ \lambda $)', 'Q-LEARNING',
+                       'MCTS-UCT']
+    for r in range(len(rp)):
+        _global = pd.DataFrame()
+
+        latency = []
+        solution = []
+        execution_time = []
+        best_time = []
+        for s in range(len(solutions)):
+            bfound = False
+            for root, dirs, files in os.walk(args.directory):
+                for file in files:
+                    if file.endswith('.csv'):
+                        if 'reconfig_' + str(solutions[s]) in file:
+                            if 'RP-' + str(rp[r]) in file:
+                                # Graph of time and latency improvement
+                                tmp = pd.read_csv(root + '/' + file, sep='\t', index_col=None)
+                                max_improv = tmp['best_gain_rate'].max()
+
+                                filtered_data = tmp[
+                                    (tmp['best_gain_rate'] >= max_improv)]
+                                # filtered_data = filtered_data.iloc[0]
+                                # print filtered_data
+
+                                min_time = filtered_data['time'].min() / 1000
+                                max_time = filtered_data['time'].max() / 1000
+                                solution.append(solutions_label[s])
+                                execution_time.append(max_time)
+                                best_time.append(min_time)
+                                latency.append(max_improv*100)
+
+                                # Graph of migrations
+                                filtered_data = filtered_data.iloc[0]
+                                plot_data = tmp[
+                                    (tmp['constant'] == filtered_data['constant']) & (
+                                            tmp['alpha'] == filtered_data['alpha']) & (
+                                            tmp['gamma'] == filtered_data['gamma']) & (
+                                            tmp['lambda'] == filtered_data['lambda']) & (
+                                            tmp['epsilon'] == filtered_data['epsilon'])]
+                                sub_set = plot_data.loc[:, ['iteration', 'best_migrations_number_LT']]
+                                gg = sub_set[
+                                    (sub_set['iteration'] == 9999)]
+                                gg = gg.loc[:, ['iteration', 'best_migrations_number_LT']]
+                                gg.columns = ['iteration', solutions_label[s]]
+
+                                gg = gg.set_index(['iteration'])
+
+                                if _global.__len__() > 0:
+                                    _global = pd.concat([_global, gg], axis=1)
+                                else:
+                                    _global = gg
+
+                                # print _global
+
+                                bfound = True
+                                break
+                if bfound:
+                    break
+        d = {'Solution': solution, 'Latency Improvement(%)': latency,
+             'Execution Time(s)': execution_time}
+        df = pd.DataFrame(d)
+        print df
+
+        plt.cla()
+        plt.clf()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        width = 0.4
+        ax2 = ax.twinx()
+        df['Latency Improvement(%)'].plot(kind='bar', color='salmon', ax=ax, width=width, position=1)
+        ax.set_xlim((-.5, 3.5))
+
+        df['Execution Time(s)'].plot(kind='bar', color='cornflowerblue', ax=ax2, width=width,
+                                     position=0, logy=True)
+        ax2.set_xlim((-.5, 3.5))
+
+        ax.set_ylabel('Latency Improvement(%)')
+        ax2.set_ylabel('Algorithm Execution Time(s)')
+
+        ax.set_xticklabels(solutions_label, rotation=15)
+        ax2.set_xticklabels(solutions_label, rotation=15)
+
+        ax.grid(linestyle='dotted')
+        # ax.set_ylim([.30, .40])
+
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
         # plt.show()
+
         plt.tight_layout()
-        plt.savefig('app' + str(app) + '_general_rp_' + str(rp[r]) + '.png')
+        plt.savefig('app_0_rp' + str(r) + '_imprv.pdf')
+
+
+def plot_bar_sidebyside_bar2(solutions=[], solutions_label=[], rp=[], markers=[], linestyles=[]):
+    # latency = []
+    # solution = []
+    # execution_time = []
+    # best_time = []
+    # rp_lat = []
+    # app = []
+    #
+    # migrations = []
+    # rp_mig = []
+    # app_mig = []
+    # sol_mig = []
+    # #
+    app_list = [args.directory, args.comparison_directory]
+    # for a in range(len(app_list)):
+    #     for r in range(len(rp)):
+    #         for s in range(len(solutions)):
+    #             bfound = False
+    #             for root, dirs, files in os.walk(app_list[a]):
+    #                 for file in files:
+    #                     if file.endswith('.csv'):
+    #                         if 'reconfig_' + str(solutions[s]) in file:
+    #                             if 'RP-' + str(rp[r]) in file:
+    #                                 # Graph of time and latency improvement
+    #                                 tmp = pd.read_csv(root + '/' + file, sep='\t', index_col=None)
+    #                                 max_improv = tmp['best_gain_rate'].max()
+    #
+    #                                 filtered_data = tmp[
+    #                                     (tmp['best_gain_rate'] >= max_improv)]
+    #
+    #                                 min_time = filtered_data['time'].min() / 1000
+    #                                 max_time = filtered_data['time'].max() / 1000
+    #                                 solution.append(solutions_label[s])
+    #                                 execution_time.append(max_time)
+    #                                 best_time.append(min_time)
+    #                                 latency.append(max_improv)
+    #                                 rp_lat.append(rp[r])
+    #                                 app.append(a)
+    #
+    #                                 # Graph of migrations
+    #                                 mig = filtered_data['best_migrations_number_LT'].max()
+    #                                 migrations.append(mig)
+    #                                 rp_mig.append(rp[r])
+    #                                 app_mig.append(a)
+    #                                 sol_mig.append(solutions_label[s])
+    #
+    #                                 bfound = True
+    #                                 break
+    #                 if bfound:
+    #                     break
+    #
+    # d = {'Solution': solution, 'Latency Improvement(%)': latency,
+    #      'Execution Time(s)': execution_time, 'Time to Best Latency(s)': best_time, 'App': app, 'DH': rp_lat}
+    # df_lat = pd.DataFrame(d)
+    # df_lat.to_csv('data_lat.csv', sep='\t')
+    #
+    # d = {'Solution': sol_mig, 'Migrations': migrations, 'App': app_mig, 'DH': rp_mig}
+    # df_mig = pd.DataFrame(d)
+    # df_mig.to_csv('data_mig.csv', sep='\t')
+
+    df_lat = pd.read_csv('data_lat.csv', sep='\t', index_col=None)
+
+    for a in range(len(app_list)):
+        data_rp_0 = df_lat[(df_lat['DH'] == 0) & (df_lat['App'] == a)]
+        data_rp_0 = data_rp_0.loc[:, ['Solution', 'Time to Best Latency(s)']]
+        data_rp_0.columns = ['Solution', 'Without DH']
+        data_rp_0 = data_rp_0.set_index('Solution')
+
+        data_rp_1 = df_lat[(df_lat['DH'] == 1) & (df_lat['App'] == a)]
+        data_rp_1 = data_rp_1.loc[:, ['Solution', 'Time to Best Latency(s)']]
+        data_rp_1.columns = ['Solution', 'With DH']
+        data_rp_1 = data_rp_1.set_index('Solution')
+
+        result = pd.concat([data_rp_0, data_rp_1], axis=1, join_axes=[data_rp_0.index])
+        print result
+        plt.cla()
+        plt.clf()
+
+        ax = result.plot.bar(rot=15, logy=True, colors=['green', 'gold'], width=0.75)
+        ax.set_ylabel('Time to Best Latency(s)')
+        ax.set_xlabel('')
+        ax.grid(linestyle='dotted')
+        plt.tight_layout()
+        plt.savefig('app' + str(a) + '_lat.pdf')
+        print 'app' + str(a) + '_lat.pdf'
+
+        # plt.show()
+
+    df_mig = pd.read_csv('data_mig.csv', sep='\t', index_col=None)
+
+    for a in range(len(app_list)):
+        data_rp_0 = df_mig[(df_lat['DH'] == 0) & (df_lat['App'] == a)]
+        data_rp_0 = data_rp_0.loc[:, ['Solution', 'Migrations']]
+        data_rp_0.columns = ['Solution', 'Without DH']
+        data_rp_0 = data_rp_0.set_index('Solution')
+
+        data_rp_1 = df_mig[(df_lat['DH'] == 1) & (df_lat['App'] == a)]
+        data_rp_1 = data_rp_1.loc[:, ['Solution', 'Migrations']]
+        data_rp_1.columns = ['Solution', 'With DH']
+        data_rp_1 = data_rp_1.set_index('Solution')
+
+
+        result = pd.concat([data_rp_0, data_rp_1], axis=1, join_axes=[data_rp_0.index])
+        print result
+        plt.cla()
+        plt.clf()
+
+        ax = result.plot.bar(rot=15, ylim=(0, 20), colors=['red', 'lightgray'], width=0.75)
+        ax.set_ylabel('Number of Migrations')
+        ax.set_xlabel('')
+        ax.grid(linestyle='dotted')
+        plt.tight_layout()
+        plt.savefig('app' + str(a) + '_mig.pdf')
+        print 'app' + str(a) + '_mig.pdf'
+        # plt.show()
+
+    df_mig = pd.read_csv('data_mig.csv', sep='\t', index_col=None)
+
 
 def fun(x, axis_z=[]):
     return axis_z[x]
@@ -575,41 +789,51 @@ def bar_plot_latency():
     # a2_rp = [1.194779, 1.1944, 1.195417, 1.195229, 2.041068, 2.10121, 1.19978, 1.19489]
     plt.cla()
     plt.clf()
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(20, 7), sharey=True)
+    fig, axes = plt.subplots()
 
     df = pd.DataFrame(
-        {'MCTS-Best-UCT': [1.192613, 0.682711], 'TDTS-SARSA(' + r'$ \lambda $)': [1.195742, 0.761952], 'Q-LEARNING': [1.205434, 0.745434], 'MCTS-UCT': [1.204456, 0.891867],
+        {'MCTS-Best-UCT': [1.192613, 0.682711], 'TDTS-SARSA(' + r'$ \lambda $)': [1.195742, 0.761952],
+         'Q-LEARNING': [1.205434, 0.745434], 'MCTS-UCT': [1.204456, 0.891867],
          'CLOUD-ONLY': [1.871786, 1.750612], 'TANEJA': [1.81241, 1.60121], 'RTR': [1.70671, 0.90978]})
-    df.plot(kind='bar', ylim=(0, 3), ax=axes[0], alpha=.6)
-    axes[0].legend().set_visible(False)
-    for container, hatch in zip(axes[0].containers, ('-', '+', 'x', '\\', '*', 'o', 'O', '.')):
-        for patch in container.patches:
-            patch.set_hatch(hatch)
+    print df
+    df.plot(kind='bar', ylim=(0, 3), ax=axes, alpha=.8,
+            colors=['salmon', 'cornflowerblue', 'silver', 'cyan', 'orange', 'purple', 'seagreen'], width=.85)
+    axes.legend().set_visible(False)
+    # for container, hatch in zip(axes.containers, ('-', '+', 'x', '\\', '*', 'o', 'O', '.')):
+    #     for patch in container.patches:
+    #         patch.set_hatch(hatch)
 
-    axes[0].set_title('Without DH')
-    axes[0].grid(linestyle='dotted')
-    axes[0].set_xticklabels(('AppA', 'AppB'), rotation=0)
-    axes[0].set_ylabel('Aggregate End-to-End Latency (ms)')
-    axes[0].legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=3)
-
+    axes.set_title('Without DH')
+    axes.grid(linestyle='dotted')
+    axes.set_xticklabels(('AppA', 'AppB'), rotation=0)
+    axes.set_ylabel('Aggregate End-to-End Latency (ms)')
+    axes.legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=2)
 
     # plt.show()
-    # plt.tight_layout()
-    # plt.savefig('latency_rp_0.png')
+    plt.tight_layout()
+    plt.savefig('latency_rp_0.pdf')
+    print 'latency_rp_0.pdf'
     #
     # plt.cla()
     # plt.clf()
     # fig = plt.figure()
     # axes = fig.gca()
-    rp_df = pd.DataFrame({'MCTS-Best-UCT': [1.192616, 0.586958], 'TDTS-SARSA(' + r'$ \lambda $)': [1.1946709999999998, 0.676658], 'Q-LEARNING': [1.202805, 0.579789],
-                             'MCTS-UCT': [1.202065, 0.742886], 'RTR-RP': [1.70519, 0.677958]})
+
+    plt.cla()
+    plt.clf()
+    fig, axes = plt.subplots()
+    rp_df = pd.DataFrame(
+        {'MCTS-Best-UCT': [1.192616, 0.586958], 'TDTS-SARSA(' + r'$ \lambda $)': [1.1946709999999998, 0.676658],
+         'Q-LEARNING': [1.202805, 0.579789],
+         'MCTS-UCT': [1.202065, 0.742886], 'RTR-RP': [1.70519, 0.677958]})
     print rp_df
 
-    rp_df.plot(kind='bar', ylim=(0, 3), ax=axes[1], alpha=.6)
-    axes[1].legend().set_visible(False)
-    for container, hatch in zip(axes[1].containers, ('-', '+', 'x', '\\', '*', 'o', 'O', '.')):
-        for patch in container.patches:
-            patch.set_hatch(hatch)
+    rp_df.plot(kind='bar', ylim=(0, 3), ax=axes, alpha=.8,
+               colors=['cornflowerblue', 'silver', 'cyan', 'purple', 'seagreen', 'orange'], width=.85)
+    axes.legend().set_visible(False)
+    # for container, hatch in zip(axes.containers, ('-', '+', 'x', '\\', '*', 'o', 'O', '.')):
+    #     for patch in container.patches:
+    #         patch.set_hatch(hatch)
 
     # ax2 = plt.axes([0, 0, 1, 1])
     # ip = InsetPosition(axes[1], [.57, .33, 0.4, 0.4])
@@ -632,17 +856,19 @@ def bar_plot_latency():
     #
     #
     # ax2.set_xticklabels(['AppB'])
-    axes[1].set_xticklabels(('AppA', 'AppB'), rotation=0)
-    axes[1].grid(linestyle='dotted')
-    axes[1].set_ylabel('Aggregate End-to-End Latency (ms)')
-    axes[1].set_title('With DH')
-    axes[1].legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=3)
+    axes.set_xticklabels(('AppA', 'AppB'), rotation=0)
+    axes.grid(linestyle='dotted')
+    axes.set_ylabel('Aggregate End-to-End Latency (ms)')
+    axes.set_title('With DH')
+    axes.legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=2)
     plt.tight_layout()
-    plt.savefig('latency_rp_1.png')
+    # plt.show()
+    plt.savefig('latency_rp_1.pdf')
+    print 'latency_rp_1.pdf'
 
 
 def plot_violin(metric='', label_x='', label_y='', solutions=[], solutions_label=[], rp=[], markers=[], linestyles=[],
-              app=1):
+                app=1):
     for r in range(len(rp)):
         plt.cla()
         plt.clf()
@@ -684,7 +910,6 @@ def plot_violin(metric='', label_x='', label_y='', solutions=[], solutions_label
 
                                 # _global_values = _global_values.append(sub_set,ignore_index=True)
 
-
                                 bfound = True
                                 break
                 if bfound:
@@ -705,6 +930,7 @@ def plot_violin(metric='', label_x='', label_y='', solutions=[], solutions_label
 
     # print _global_values
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -721,7 +947,7 @@ if __name__ == '__main__':
         markers = ['.', 'o', 'v', '^', '>', '<', 's', 'd', 'v', '+', '*']
         linestyles = ['-', '--', '-.', ':', '-', '--', '-.', ':']
 
-        solutions = [0, 1, 2, 4]
+        solutions = [0, 1, 2, 4, 5]
         solutions_label = ['MCTS-Best-UCT', 'TDTS-SARSA(' + r'$ \lambda $)', 'Q-LEARNING',
                            'MCTS-UCT']
         rp = [0, 1]
@@ -746,13 +972,13 @@ if __name__ == '__main__':
         # plot_line(metric='best_latency_time', label_x='Number of Simulations', label_y='Latency(ms)',
         #           solutions=solutions,
         #           solutions_label=solutions_label, rp=rp, markers=markers, linestyles=linestyles, app=2)
-        # plot_line_sidebyside(solutions=solutions,
-        #            solutions_label=solutions_label, rp=rp, markers=markers, linestyles=linestyles, app=1)
-
+        plot_bar_sidebyside_bar(solutions=solutions,
+                                solutions_label=solutions_label, rp=rp, markers=markers, linestyles=linestyles)
+        #
         # plot_line_sidebyside_bar(solutions=solutions,
         #            solutions_label=solutions_label, rp=rp, markers=markers, linestyles=linestyles, app=2)
 
         # plot_violin(metric='best_gain_rate', label_x='Number of Simulations', label_y='Latency(ms)',
         #           solutions=solutions,
         #           solutions_label=solutions_label, rp=rp, markers=markers, linestyles=linestyles, app=2)
-        bar_plot_latency()
+        # bar_plot_latency()
