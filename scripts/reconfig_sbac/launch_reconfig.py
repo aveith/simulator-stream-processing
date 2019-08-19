@@ -26,7 +26,7 @@ class experiment_parameter:
         self.file_operator_stat = ""
         self.file_path_stat = ""
         self.reconfig_applying_rp = ['true', 'false']
-        self.action_heuristic = [0, 1, 2]
+        self.action_heuristic = [0]
 
 
 class experiment_configuration:
