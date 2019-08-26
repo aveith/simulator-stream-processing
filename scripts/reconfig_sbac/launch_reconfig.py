@@ -373,18 +373,18 @@ def main(dir="", dir_trace_datasets="", configurations=1, seed=3454326, processe
     # execute_simulation(tracing_scenarios[100])
     # execute_simulation(scenarios[0])
     if tracing_scenarios.__len__() > 0:
-        execute_simulation(tracing_scenarios[1])
-    #     pool = Pool(processes=processes)
-    #     pool.map(execute_simulation, tracing_scenarios)
-    #     pool.close()
-    #     pool.join()
-    #
-    # if scenarios.__len__() > 0:
-    #     # execute_simulation(scenarios[0])
-    #     pool = Pool(processes=processes)
-    #     pool.map(execute_simulation, scenarios)
-    #     pool.close()
-    #     pool.join()
+        # execute_simulation(tracing_scenarios[1])
+        pool = Pool(processes=processes)
+        pool.map(execute_simulation, tracing_scenarios)
+        pool.close()
+        pool.join()
+
+    if scenarios.__len__() > 0:
+        # execute_simulation(scenarios[0])
+        pool = Pool(processes=processes)
+        pool.map(execute_simulation, scenarios)
+        pool.close()
+        pool.join()
 
     logging.warning('Simulations finished!')
 
