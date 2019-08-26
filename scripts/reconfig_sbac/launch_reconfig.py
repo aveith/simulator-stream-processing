@@ -34,7 +34,7 @@ class experiment_configuration:
                  reconfig_strategy=0, reconfig_iterations=10000, reconfig_constant=.9, reconfig_alpha=.1,
                  reconfig_gamma=1, reconfig_lambda=1, reconfig_epsilon=.6, read_from_traced_data_reconfig='false',
                  save_traced_data_reconfig='false', dir_trace_datasets='', finish_after_tracing='false',
-                 app='a1',  seeds=[], configuration=0, tracing=False, config_strategy=-1, network='n3.xml',
+                 app='a1', seeds=[], configuration=0, tracing=False, config_strategy=-1, network='n3.xml',
                  file_path_stat="", file_operator_stat="", reconfig_applying_rp='false', action_heuristic=0):
         self.id = id
         self.directory = directory
@@ -163,8 +163,8 @@ def build_simulation_scenarios(traced_scenarios=[], parameters=experiment_parame
                             for ep in range(len(epsilon)):
                                 for ah in range(len(parameters.reconfig_applying_rp)):
                                     for ac in (range(len(parameters.action_heuristic))):
-                                    # for pm in range(len(parameters.reconfig_price_model)):
-                                    #     for sc in range(len(parameters.reconfig_scenario)):
+                                        # for pm in range(len(parameters.reconfig_price_model)):
+                                        #     for sc in range(len(parameters.reconfig_scenario)):
                                         exp = experiment_configuration()
                                         exp.id = id
                                         exp.directory = traced_scenarios[tr].directory
@@ -322,8 +322,10 @@ def execute_simulation(_scenario=experiment_configuration()):
 
     _file_name, _name_config = build_ini_file(_scenario=_scenario, _dir=_working_dir)
     now = datetime.now()
+    # print "../simulator-stream-processing  -u Cmdenv --cmdenv-redirect-output=true --cmdenv-express-mode=true -l ../src/fogStream -n ../src:. -f " + _working_dir + _file_name + " -c " + _name_config + ">" + _working_dir + str(
+    #         _scenario.id) + ".txt"
     os.system(
-        "../fogStream -u Cmdenv --cmdenv-redirect-output=true --cmdenv-express-mode=true -l ../src/fogStream -n ../src:. -f " + _working_dir + _file_name + " -c " + _name_config + ">" + _working_dir + str(
+        "../simulator-stream-processing  -u Cmdenv --cmdenv-redirect-output=true --cmdenv-express-mode=true -l ../src/fogStream -n ../src:. -f " + _working_dir + _file_name + " -c " + _name_config + ">" + _working_dir + str(
             _scenario.id) + ".txt")
     check_simulation_execution(id=_scenario.id, app=_scenario.app, dir=_working_dir + 'results/', filename=_file_name)
     later = datetime.now()
@@ -371,18 +373,18 @@ def main(dir="", dir_trace_datasets="", configurations=1, seed=3454326, processe
     # execute_simulation(tracing_scenarios[100])
     # execute_simulation(scenarios[0])
     if tracing_scenarios.__len__() > 0:
-        # execute_simulation(tracing_scenarios[1])
-        pool = Pool(processes=processes)
-        pool.map(execute_simulation, tracing_scenarios)
-        pool.close()
-        pool.join()
-
-    if scenarios.__len__() > 0:
-        # execute_simulation(scenarios[0])
-        pool = Pool(processes=processes)
-        pool.map(execute_simulation, scenarios)
-        pool.close()
-        pool.join()
+        execute_simulation(tracing_scenarios[1])
+    #     pool = Pool(processes=processes)
+    #     pool.map(execute_simulation, tracing_scenarios)
+    #     pool.close()
+    #     pool.join()
+    #
+    # if scenarios.__len__() > 0:
+    #     # execute_simulation(scenarios[0])
+    #     pool = Pool(processes=processes)
+    #     pool.map(execute_simulation, scenarios)
+    #     pool.close()
+    #     pool.join()
 
     logging.warning('Simulations finished!')
 
