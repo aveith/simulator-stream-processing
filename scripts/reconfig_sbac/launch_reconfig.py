@@ -10,9 +10,9 @@ from datetime import datetime
 
 class experiment_parameter:
     def __init__(self, ):
-        self.app = ['a1', 'a2', 'a3', 'a4', 'a5', 'a10', 'a11', 'a12', 'a13', 'app3']
+        self.app = ['a1', 'a5']
         self.reconfig_iterations = 10000
-        self.reconfig_strategies = [0, 1, 2, 3, 4, 5]
+        self.reconfig_strategies = [0, 1, 2, 4]
         self.config_strategies = [1, 4]
         self.reconfig_constants = [.0001, .001, .05]
         self.reconfig_alpha = [.001, .1]  # no

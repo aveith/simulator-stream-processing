@@ -70,7 +70,7 @@ def create_datasets(dataset=dataset_configuration()):
         for root, dirs, files in os.walk(args.directory):
             for file in files:
                 if file.endswith('.rlog'):
-                    if 'app_' + str(dataset.app) + '_' in root and 'configuration_' + str(c) in root and 'rp_' + str(
+                    if 'app_' + str(dataset.app) + '_' in root and 'configuration_' + str(c) + '_' in root and 'rp_' + str(
                             dataset.reconfig_applying_rp) in root:
                         if validate_scenario(reconfig_strategy=dataset.strategy,
                                              config_strategy=dataset.config_strategy,
@@ -89,9 +89,9 @@ def create_datasets(dataset=dataset_configuration()):
                             # print merged_files
 
         if merged_files.__len__() > 0:
-            min_value = merged_files['best_aggregate_cost'].min()
+            min_value = merged_files['best_latency_time'].min()
             filtered_data = merged_files[
-                (merged_files['best_aggregate_cost'] <= min_value)]
+                (merged_files['best_latency_time'] <= min_value)]
 
             min_index = filtered_data['test_id'].min()
 
@@ -130,15 +130,15 @@ if __name__ == '__main__':
             if args.process:
                 if args.output:
                     config_strategies = [1, 4]
-                    app = ['a1', 'a2', 'a3', 'a4', 'a5', 'a10', 'a11', 'a12', 'a13', 'app3']
-                    reconfig_strategies = [0, 1, 2, 3, 4, 5]
+                    app = ['a1', 'a5']
+                    reconfig_strategies = [0, 1, 2, 4]
                     reconfig_constants = [.0001, .001, .05]
                     reconfig_alpha = [.001, .1]  # no
                     reconfig_gamma = [.005, .05]
                     reconfig_lambda = [.005, .05]
                     reconfig_epsilon = [.001, .1]
                     reconfig_applying_rp = ['true', 'false']
-                    action_heuristic = [0, 1, 2]
+                    action_heuristic = [0]
 
                     scenarios = build_scenarios(reconfig_strategies=reconfig_strategies,
                                                 reconfig_app=app,
