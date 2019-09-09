@@ -331,7 +331,7 @@ def execute_simulation(_scenario=experiment_configuration()):
     _file_name, _name_config = build_ini_file(_scenario=_scenario, _dir=_working_dir)
     now = datetime.now()
     os.system(
-        "../fogStream -u Cmdenv --cmdenv-redirect-output=true --cmdenv-express-mode=false -l ../src/fogStream -n ../src:. -f " + _working_dir + _file_name + " -c " + _name_config + ">" + _working_dir + str(
+        "../simulator-stream-processing  -u Cmdenv --cmdenv-redirect-output=true --cmdenv-express-mode=true -l ../src/fogStream -n ../src:. -f " + _working_dir + _file_name + " -c " + _name_config + ">" + _working_dir + str(
             _scenario.id) + ".txt")
     later = datetime.now()
     difference = (later - now).total_seconds()

@@ -183,6 +183,8 @@ def bar_time_best_latency(data=pd.DataFrame(), conf=configurations()):
         df = pd.DataFrame({'solution': conf.reconfig_strategies_name, 'With DH': with_dh_mean,
                            'Without DH': without_dh_mean, 'std with dh': with_dh_std,
                            'std without dh': without_dh_std})
+        print 'App: ' + str(a)
+        print df
 
         ind = np.arange(len(conf.reconfig_strategies_name))
         width = 0.35
@@ -216,7 +218,7 @@ def bar_scenario_2(data=pd.DataFrame(), conf=configurations()):
         {'MCTS-Best-UCT': [1.192613, 0.682711], 'TDTS-SARSA(' + r'$ \lambda $)': [1.195742, 0.761952],
          'Q-LEARNING': [1.205434, 0.745434], 'MCTS-UCT': [1.204456, 0.891867],
          'CLOUD-ONLY': [1.871786, 1.750612], 'TANEJA': [1.81241, 1.60121], 'RTR': [1.70671, 0.90978]})
-    # print df
+    print df
     df.plot(kind='bar', ylim=(0, 3), ax=axes, alpha=.8, capsize=5,
             color=['salmon', 'cornflowerblue', 'silver', 'cyan', 'orange', 'purple', 'seagreen'], width=.85,
             yerr=[[.353, .6088], [.10221, .12541], [.1325, .30024], [.2353, .2589], [.2831, .13577], [.5964, .6500],
@@ -249,7 +251,7 @@ def bar_scenario_2(data=pd.DataFrame(), conf=configurations()):
         {'MCTS-Best-UCT': [1.182616, 0.486958], 'TDTS-SARSA(' + r'$ \lambda $)': [1.1946709999999998, 0.676658],
          'Q-LEARNING': [1.203805, 0.569789],
          'MCTS-UCT': [1.502065, 0.842886], 'RTR-RP': [1.70519, 0.677958]})
-    # print rp_df
+    print rp_df
 
     rp_df.plot(kind='bar', ylim=(0, 3), ax=axes, alpha=.8, capsize=5,
                color=['cornflowerblue', 'silver', 'cyan', 'purple', 'seagreen', 'orange'], width=.85,
@@ -282,10 +284,10 @@ if __name__ == '__main__':
         if data.__len__() > 0:
             conf = configurations()
 
-            bar_algo_time_latency_imprv(data=data, conf=conf)
+            # bar_algo_time_latency_imprv(data=data, conf=conf)
 
-            bar_time_best_latency(data=data, conf=conf)
+            # bar_time_best_latency(data=data, conf=conf)
 
-            bar_migrations(data=data, conf=conf)
-
+            # bar_migrations(data=data, conf=conf)
+            #
             bar_scenario_2(data=data, conf=conf)
