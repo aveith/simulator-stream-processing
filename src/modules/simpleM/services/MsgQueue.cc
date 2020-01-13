@@ -284,4 +284,14 @@ void MsgQueue::setSentRegs(int sentRegs) {
     mSentRegs = sentRegs;
 }
 
+bool MsgQueue::isLogData() const {
+    return mLogData;
+}
+
+void MsgQueue::setLogData(bool logData) {
+    mLogData = logData;
+}
+
 } //namespace
+
+

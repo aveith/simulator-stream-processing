@@ -35,6 +35,8 @@ class MsgQueue : public cSimpleModule
     void setServiceMin(double serviceMin);
     int getSentRegs() const;
     void setSentRegs(int sentRegs);
+    bool isLogData() const;
+    void setLogData(bool logData);
 
   protected:
     vector<vector<int>> mParticipatingPaths;
@@ -45,6 +47,7 @@ class MsgQueue : public cSimpleModule
     cQueue mQueueTopic;
     long mRcvMsgs;
     int mSentRegs = 0;
+    bool mLogData = false;
 
   private:
     void initialize();

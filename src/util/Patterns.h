@@ -80,6 +80,12 @@ public:
         LatencyAware,
     };
 
+    enum ConfigScaleApproach{
+        AllResources,
+        NetworkLatency,
+        CPUPower,
+    };
+
     static constexpr double PERCENTAGE_EXTERNAL_HOSTS = .001;
     static constexpr bool PRINT_RECONFIGURATION_LOG = false;
     static constexpr double TIME_STATISTIC_EVALUATION = 1100;

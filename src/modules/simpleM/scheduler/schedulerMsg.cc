@@ -1010,7 +1010,10 @@ void SchedulerMsg::loadParameters() {
             par("action_heuristic").intValue());
 
     this->getParameters()->setTimeReconfiguration(
-                par("time_reconfiguration").intValue());
+            par("time_reconfiguration").intValue());
+
+    this->getParameters()->setConfigScaleApproach(
+            par("config_scale_approach").intValue());
 
 }
 
@@ -1153,7 +1156,7 @@ void SchedulerMsg::configuration() {
 
     Configuration* configuration = new Configuration(this->getGenralEnv());
     configuration->setupEnvironment(this->getParameters()->getBaseStrategy(),
-            this->getParameters()->isUseSlots());
+            this->getParameters()->isUseSlots(), this->getParameters()->getConfigScaleApproach());
 
     duration<double> iteration_duration = high_resolution_clock::now() - time;
     cout

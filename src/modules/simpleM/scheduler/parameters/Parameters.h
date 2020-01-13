@@ -128,6 +128,8 @@ public:
     void setActionHeuristic(int actionHeuristic);
     int getTimeReconfiguration() const;
     void setTimeReconfiguration(int timeReconfiguration);
+    int getConfigScaleApproach() const;
+    void setConfigScaleApproach(int configScaleApproach);
 
 protected:
     string mDirectoryToSaveFiles;
@@ -191,6 +193,8 @@ protected:
     bool mUseSlots = false;
     int mActionHeuristic = 0;
     int mTimeReconfiguration = -1;
+
+    int mConfigScaleApproach = 0;
 };
 
 } /* namespace fogstream */

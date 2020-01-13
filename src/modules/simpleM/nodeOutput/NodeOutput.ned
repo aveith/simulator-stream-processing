@@ -7,6 +7,7 @@ simple NodeOutput
 {
     parameters:
     	@display("i=old/bwsink;t=Wait List:0");
+    	volatile bool logData = default(false);  
     
     gates:        
         input inIn[];

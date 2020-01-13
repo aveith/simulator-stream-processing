@@ -15,6 +15,7 @@ module NodeMsg
         
         double totalCpu = default(10000000);
         double totalMem = default(10000000);
+        bool logData = default(false);
         
         //@display("i=abstract/router;t=Avail.:\nMem:$avaliableMem Bytes\nCPU:$avaliableCpu MIPS");
         @display("i=abstract/router");

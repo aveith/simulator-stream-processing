@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iterator>
 #include <iostream>
+#include <unordered_set>
 
 #include "../env/objects/networkconnection/resourcedata/resourcecapability/ResourceCapability.h"
 #include "../env/objects/networkconnection/linkdata/linkcapability/LinkCapability.h"
@@ -125,14 +126,30 @@ void Configuration::ExecuteStrategies(vector<int> orderedList,
 
     cout << "\nExecuting the operator placement strategy - "
             << to_string(strategy) << ":" << endl;
-    GoalRate rate;
+    GoalRate* rate = new GoalRate();
     for (auto ope = orderedList.begin(); ope != orderedList.end(); ++ope) {
         cout << "--- Evaluating the placement of the operator: " << *ope
                 << endl;
+
+        if (rate->getCurrentOperatorMapping() != nullptr) {
+            delete rate->getCurrentOperatorMapping();
+            rate->setCurrentOperatorMapping(nullptr);
+            for (unsigned int i = 0; i < rate->getLinkMapping().size(); i++) {
+                delete rate->getLinkMapping().at(i);
+            }
+            rate->getLinkMapping().clear();
+
+            for (unsigned int i = 0;
+                    i < rate->getPreviousOperatorMapping().size(); i++) {
+                delete rate->getPreviousOperatorMapping().at(i);
+            }
+            rate->getPreviousOperatorMapping().clear();
+
+        }
+
         //The function returns the rate structure for the operator placement,
         //  the function evaluates the communication and computation
         //  following the strategy rules
-        GoalRate* rate = new GoalRate();
         this->determineOperatorPlacement(rate, strategy, *ope, tanejaDeployment,
                 isUseSlot);
 
@@ -257,9 +274,10 @@ void Configuration::ExecuteStrategies(vector<int> orderedList,
                     true);
         }
 
-        delete rate;
-        rate = nullptr;
     }
+
+    delete rate;
+    rate = nullptr;
 
     for (unsigned int iLink = 0;
             iLink < this->getEnv()->getLinkMapping().size(); iLink++) {
@@ -788,7 +806,8 @@ int Configuration::lowerBound(vector<ResourceCapability> nodes,
     }
 }
 
-int Configuration::setupEnvironment(int strategy, bool isUseSlots) {
+int Configuration::setupEnvironment(int strategy, bool isUseSlots,
+        int configScaleApproach) {
 
     /**REGIONS PATTERNS TO ESTIMATE THE TIME IN PARALLEL AND CONCURRENT REGIONS
      * Currently, the algorithm only cares for the location of the sinks.
@@ -798,6 +817,7 @@ int Configuration::setupEnvironment(int strategy, bool isUseSlots) {
      * and apply it to obtain the times following the application regions
      */
 
+    this->setConfigScaleApproach(configScaleApproach);
     //Get regions from the graph
     vector<regionsDep> regions = this->getRegions();
 
@@ -956,33 +976,53 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
 
         int iHostTypes = this->DeviceTypeStrategy(operatorId);
 
-        for (unsigned int iHost = 0;
-                iHost < this->getEnv()->getDeployableHosts().size(); iHost++) {
+        //veith 2020/01/13 -- begin
+        vector<int> availableResources;
+
+        //New approach to determine the used devices when deploying operators
+        if (this->getConfigScaleApproach()
+                == Patterns::ConfigScaleApproach::NetworkLatency) {
+
+            //Clear pointers begin
+            //            if (iHostTypes != Patterns::DeviceType::Sensor) { //<-- check this todo
+            this->scaleStrategySensors(availableResources, operatorId);
+            //            }
+
+            //Clear pointers end
+        } else {
+            for (unsigned int iHost = 0;
+                    iHost < this->getEnv()->getDeployableHosts().size();
+                    iHost++) {
+                availableResources.push_back(
+                        this->getEnv()->getDeployableHosts().at(iHost));
+            }
+        } //veith 2020/01/13 -- end
+
+        for (unsigned int iHost = 0; iHost < availableResources.size();
+                iHost++) {
 
             if (isUseSlot
                     and this->getEnv()->getResidualHostCapabilities().at(
-                            this->getEnv()->getDeployableHosts().at(iHost)).getSlotNumber()
+                            availableResources.at(iHost)).getSlotNumber()
                             != -1) {
 
                 if (this->getEnv()->getResidualHostCapabilities().at(
-                        this->getEnv()->getDeployableHosts().at(iHost)).getSlotNumber()
-                        - 1 < 0)
+                        availableResources.at(iHost)).getSlotNumber() - 1 < 0)
                     continue;
             }
             //if the strategy considers only the rate then the algorithm will calculate the rate for all resources
             // otherwise it will follow the RP
             if ((strategy == Patterns::BaseStrategy::RTR
                     && this->getEnv()->getResources().at(
-                            this->getEnv()->getDeployableHosts().at(iHost))->getType()
+                            availableResources.at(iHost))->getType()
                             == Patterns::DeviceType::Sensor)
                     || (strategy == Patterns::BaseStrategy::RTR_RP
                             && this->getEnv()->getResources().at(
-                                    this->getEnv()->getDeployableHosts().at(
-                                            iHost))->getType() == iHostTypes)) {
+                                    availableResources.at(iHost))->getType()
+                                    == iHostTypes)) {
                 GoalRate* tempMap = new GoalRate();
                 this->placementOverheads(tempMap, operatorId,
-                        this->getEnv()->getDeployableHosts().at(iHost), false,
-                        false);
+                        availableResources.at(iHost), false, false);
                 if (!tempMap->isConstrained()
                         && tempMap->getTotalRate() < totalRate) {
                     rate->cloneObject(tempMap);
@@ -993,6 +1033,8 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
                 tempMap = nullptr;
             }
         }
+
+        availableResources.clear();
 
         //If the algorithm didn't match a solution for the RP, it will try to place on cloud
         if ((strategy == Patterns::BaseStrategy::RTR
@@ -1400,6 +1442,210 @@ vector<int> Configuration::OperatorOrdering() {
 
 void Configuration::setOrderedByHier(vector<orderListS>& orderedByHier) {
     mOrderedByHier = orderedByHier;
+}
+
+int Configuration::getConfigScaleApproach() const {
+    return mConfigScaleApproach;
+}
+
+void Configuration::scaleStrategySensors(vector<int>& deployable,
+        int operatorId) {
+
+    vector<int> edgedevices;
+    vector<int> clouds;
+
+    //get current position of previous operators and  sink locations
+    this->shorterListofDeployableDevices(operatorId, edgedevices, clouds);
+
+    for (unsigned int i = 0; i < edgedevices.size(); i++) {
+        deployable.push_back(edgedevices.at(i));
+    }
+
+    for (unsigned int i = 0; i < clouds.size(); i++) {
+        deployable.push_back(clouds.at(i));
+    }
+
+    edgedevices.clear();
+    clouds.clear();
+
+}
+
+void Configuration::shorterListofDeployableDevices(int operatorId,
+        vector<int>& edgedevices, vector<int>& clouds) {
+
+    //Get details from previous operators
+    for (unsigned int i = 0;
+            i < this->getEnv()->getApplicationTopology().size(); ++i) {
+        if (this->getEnv()->getApplicationTopology().at(i)->getToOperatorId()
+                == operatorId) {
+
+            for (unsigned int j = 0;
+                    j < this->getEnv()->getOperatorMapping().size(); j++) {
+                if (this->getEnv()->getOperatorMapping().at(j)->getOperatorId()
+                        == this->getEnv()->getApplicationTopology().at(i)->getFromOperatorId()) {
+                    if (this->getEnv()->getResources().at(
+                            this->getEnv()->getOperatorMapping().at(j)->getHostId())->getGatewayId()
+                            > 0) {
+                        //in-situ
+                        this->getBestInSituandInTransitDevices(
+                                this->getEnv()->getResources().at(
+                                        this->getEnv()->getOperatorMapping().at(
+                                                j)->getHostId())->getGatewayId(),
+                                edgedevices);
+
+                    } else {
+                        //in-situ
+                        clouds.push_back(
+                                this->getEnv()->getResources().at(
+                                        this->getEnv()->getOperatorMapping().at(
+                                                j)->getHostId())->getId());
+                    }
+
+                }
+            }
+
+        }
+    }
+
+    //get details from sinks and their placements --todo check rules
+    for (unsigned int i = 0; i < this->getEnv()->getApplicationPaths().size();
+            ++i) {
+        for (unsigned int j = 0;
+                j < this->getEnv()->getApplicationPaths().at(i).size(); ++j) {
+            if (this->getEnv()->getApplicationPaths().at(i).at(j)
+                    == operatorId) {
+
+                for (unsigned int k = 0; k < this->getEnv()->getSinks().size();
+                        k++) {
+                    if (this->getEnv()->getSinks().at(k)->getOperatorId()
+                            == this->getEnv()->getApplicationPaths().at(i).at(
+                                    this->getEnv()->getApplicationPaths().at(i).size()
+                                            - 1)) {
+
+                        if (this->getEnv()->getResources().at(
+                                this->getEnv()->getSinks().at(k)->getHostId())->getGatewayId()
+                                > 0) {
+                            //in-situ
+                            this->getBestInSituandInTransitDevices(
+                                    this->getEnv()->getResources().at(
+                                            this->getEnv()->getSinks().at(k)->getHostId())->getGatewayId(),
+                                    edgedevices);
+
+                        } else {
+                            clouds.push_back(
+                                    this->getEnv()->getSinks().at(k)->getHostId());
+                        }
+                    }
+
+                }
+
+                break;
+            }
+        }
+
+    }
+
+    //Get unique values
+    if (edgedevices.size() > 0) {
+        sort(edgedevices.begin(), edgedevices.end());
+        edgedevices.erase(unique(edgedevices.begin(), edgedevices.end()),
+                edgedevices.end());
+    }
+
+    if (clouds.size() > 0) {
+        sort(clouds.begin(), clouds.end());
+        clouds.erase(unique(clouds.begin(), clouds.end()), clouds.end());
+    }
+
+}
+
+void Configuration::getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices) {
+    double dLatSitu = std::numeric_limits<double>::max();
+    double dCPUSitu = std::numeric_limits<double>::min();
+    int iResSitu = -1;
+
+    double dLatTransit = std::numeric_limits<double>::max();
+    double dCPUTransit = std::numeric_limits<double>::min();
+    int iResTransit = -1;
+
+    for (unsigned int i = 0; i < this->getEnv()->getNetworkTopology().size();
+            i++) {
+
+        if (this->getEnv()->getNetworkTopology().at(i)->getSourceId() == gtw) {
+
+            //In-situ
+            if (this->getEnv()->getResources().at(
+                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
+                    == Patterns::DeviceType::Sensor
+                    and dLatSitu
+                            > this->getEnv()->getLinks().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
+                dLatSitu =
+                        this->getEnv()->getLinks().at(
+                                this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
+                iResSitu =
+                        this->getEnv()->getResources().at(
+                                this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+            }
+
+            //In-transit
+            if (this->getEnv()->getResources().at(
+                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
+                    != Patterns::DeviceType::Sensor
+                    and dLatTransit
+                            > this->getEnv()->getLinks().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
+                dLatTransit =
+                        this->getEnv()->getLinks().at(
+                                this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
+                iResTransit =
+                        this->getEnv()->getResources().at(
+                                this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+            }
+
+        }
+    }
+
+
+
+    if (iResTransit > 0) {
+        double dLatTransit = std::numeric_limits<double>::max();
+        int gtw2 = iResTransit;
+        for (unsigned int i = 0;
+                i < this->getEnv()->getNetworkTopology().size(); i++) {
+            if (this->getEnv()->getNetworkTopology().at(i)->getSourceId()
+                    == gtw2) {
+                //In-situ
+                if (this->getEnv()->getResources().at(
+                        this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
+                        == Patterns::DeviceType::Sensor
+                        and dLatTransit
+                                < this->getEnv()->getLinks().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                i)->getLinkId())->getDelay()) {
+                    dLatTransit =
+                            this->getEnv()->getLinks().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
+                    iResTransit =
+                            this->getEnv()->getResources().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+                }
+
+            }
+        }
+    }
+
+    if (iResSitu > 0) {
+        edgedevices.push_back(iResSitu);
+    }
+    if (iResTransit > 0) {
+        edgedevices.push_back(iResTransit);
+    }
+
+}
+
+void Configuration::setConfigScaleApproach(int configScaleApproach) {
+    mConfigScaleApproach = configScaleApproach;
 }
 
 }

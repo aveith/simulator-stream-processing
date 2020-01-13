@@ -50,6 +50,7 @@ protected:
     int mSentRegs = 0;
     vector<RoutingData*> mRoutingTable;
     unordered_map<int, cQueue*> mScheduledMessages;
+    bool mLogData = false;
 
 private:
     virtual void initialize();
@@ -90,6 +91,8 @@ public:
 
     vector<int> DefineNextOperatorsIndex(int nextOperatorId, int nextFissionId,
             const char * appName);
+    bool isLogData() const;
+    void setLogData(bool logData);
 };
 
 } //namespace

@@ -48,6 +48,8 @@ public:
     void setSentEventRegs(int sentEventRegs);
     int getSentStateRegs() const;
     void setSentStateRegs(int sentStateRegs);
+    bool isLogData() const;
+    void setLogData(bool logData);
 
 private:
     virtual void initialize();
@@ -89,6 +91,7 @@ protected:
 
     int mSentStateRegs = 0;
     int mSentEventRegs = 0;
+    bool mLogData = false;
 };
 
 } //namespace

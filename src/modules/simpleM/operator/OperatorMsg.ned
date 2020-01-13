@@ -23,6 +23,7 @@ simple OperatorMsg
         volatile double availableMem = default(0);
         
         volatile double timeWindow = default(0);        
+        volatile bool logData = default(false);     
     gates:        
         input  queueNextIn[];
         output queueNextOut[];

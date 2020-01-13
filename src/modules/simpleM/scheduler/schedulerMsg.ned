@@ -80,6 +80,8 @@ simple SchedulerMsg
         bool use_slots = default(false);
 		int action_heuristic = default(0);
         int time_reconfiguration = default(-1);
+        
+        int config_scale_approach = default(0);
     gates:
         input in[];
         output out[];

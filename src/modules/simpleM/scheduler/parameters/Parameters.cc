@@ -505,6 +505,14 @@ void Parameters::setTimeReconfiguration(int timeReconfiguration) {
     mTimeReconfiguration = timeReconfiguration;
 }
 
+int Parameters::getConfigScaleApproach() const {
+    return mConfigScaleApproach;
+}
+
+void Parameters::setConfigScaleApproach(int configScaleApproach) {
+    this->mConfigScaleApproach = configScaleApproach;
+}
+
 } /* namespace fogstream */
 
 

@@ -92,21 +92,29 @@ private:
             vector<regionsDep> regions);
 
     vector<int> OperatorOrdering();
+
+    void scaleStrategySensors(vector<int> &deployable, int operatorId);
+    void shorterListofDeployableDevices(int operatorId, vector<int>& edgedevices, vector<int>& clouds);
+    void getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices);
 public:
     Configuration(Env* &env);
     virtual ~Configuration();
 
     //Functions and procedures shared by all strategies
-    int setupEnvironment(int strategy, bool isUseSlots);
+    int setupEnvironment(int strategy, bool isUseSlots,
+            int configScaleApproach);
 
     Env*& getEnv();
     void setEnv(Env*& env);
     vector<orderListS>& getOrderedByHier();
     void setOrderedByHier(vector<orderListS>& orderedByHier);
+    int getConfigScaleApproach() const;
+    void setConfigScaleApproach(int configScaleApproach);
 
 protected:
     Env* env;
     vector<orderListS> mOrderedByHier;
+    int mConfigScaleApproach;
 
 };
 

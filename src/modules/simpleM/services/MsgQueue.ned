@@ -10,7 +10,8 @@ simple MsgQueue
         volatile double memoryCost = default(0);
         volatile double cpuCost = default(0);
         
-        string topic = default("stream");        
+        string topic = default("stream");    
+        bool logData = default(false);    
                 
     gates:
         input  inIn[];

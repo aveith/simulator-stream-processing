@@ -399,6 +399,8 @@ void NodeManager::setParModule(const char* appName, cModule *module,
 
     }
 
+
+
     if (module->hasPar("appName")) {
         module->par("appName").setStringValue(appName);
     }

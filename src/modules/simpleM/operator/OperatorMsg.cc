@@ -94,6 +94,7 @@ void OperatorMsg::initialize() {
     this->setAvailableCpu(par("availableCPU").doubleValue());
     this->setAvailableMem(par("availableMem").doubleValue());
     this->setTimeWindow(par("timeWindow").doubleValue());
+    this->setLogData(par("logData").boolValue());
 
     //Initialize the object state into the operator - TODO - different triggers
     if (this->getTimeWindow() > 0 && this->getInternalState() == nullptr) {
@@ -149,8 +150,10 @@ void OperatorMsg::handleMessage(cMessage *msg) {
         this->processMsg(msg);
 
     } else {
+        if (this->isLogData()){
         //Send information from arrival messages to statistics at the scheduler
         this->sendDataToHistory(msg, 0, true);
+        }
 
         //If the operator is stateful then the compute time will be included into
         //  the last event that comes
@@ -344,8 +347,10 @@ void OperatorMsg::processMsg(cMessage *msg) {
         this->setProcessedEvents(this->getProcessedEvents() + 1);
         this->refreshDisplay();
 
+        if (this->isLogData()){
         //Send data to the operator statistics
         this->sendDataToHistory(topic, delayMsgQueue, false);
+        }
         delete topic;
     }
 
@@ -651,6 +656,14 @@ int OperatorMsg::getSentStateRegs() const {
 
 void OperatorMsg::setSentStateRegs(int sentStateRegs) {
     mSentStateRegs = sentStateRegs;
+}
+
+bool OperatorMsg::isLogData() const {
+    return mLogData;
+}
+
+void OperatorMsg::setLogData(bool logData) {
+    mLogData = logData;
 }
 
 } //namespace

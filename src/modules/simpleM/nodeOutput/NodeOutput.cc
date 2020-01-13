@@ -93,7 +93,9 @@ void NodeOutput::handleMessage(cMessage *msg) {
     //        i = i + 1;
     //    }
     if (msg->getKind() == Patterns::MessageType::Topic) {
-        this->sendDataToHistory(msg);
+        if (this->isLogData()) {
+            this->sendDataToHistory(msg);
+        }
 
         this->ScheduleMessage(msg);
 
@@ -405,5 +407,14 @@ void NodeOutput::setScheduledMessages(
         unordered_map<int, cQueue*>& scheduledMessages) {
     mScheduledMessages = scheduledMessages;
 }
+
+bool NodeOutput::isLogData() const {
+    return mLogData;
+}
+
+void NodeOutput::setLogData(bool logData) {
+    mLogData = logData;
+}
+
 } //namespace
 
