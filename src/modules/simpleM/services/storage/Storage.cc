@@ -6,63 +6,70 @@ namespace fogstream {
 
 Define_Module(Storage);
 
-void Storage::initialize()
-{
+simsignal_t Storage::qlat = registerSignal("qlat");
+
+void Storage::initialize() {
     this->queueTopic.clear();
     this->queueTopic.setName("topic");
     this->setRcvMsgs(0);
 
 }
 
-void Storage::handleMessage(cMessage *msg){
+void Storage::handleMessage(cMessage *msg) {
     const char* message = msg->getName();
-    std::string messageName (message);
-    std::string stdRequest (Patterns::BASE_REQUEST);
-    std::string stdTopic (Patterns::BASE_TOPIC);
+    std::string messageName(message);
+    std::string stdRequest(Patterns::BASE_REQUEST);
+    std::string stdTopic(Patterns::BASE_TOPIC);
 
-
-//    this->queueTopic.insert(msg);
+    //    this->queueTopic.insert(msg);
     //emit(qlenTopic,queueTopic.getLength());
 
-    if (messageName.find(stdTopic)!=std::string::npos ){
-        this->setRcvMsgs(this->getRcvMsgs()+1);
+    if (messageName.find(stdTopic) != std::string::npos) {
+
+        this->setRcvMsgs(this->getRcvMsgs() + 1);
         this->refreshDisplay(this->getRcvMsgs());
 
-        MsgQueue* msgQ = dynamic_cast<MsgQueue*> (this->getModuleMsgQueue());
-        if (msgQ){
-            TopicEvent* rcvMsg = dynamic_cast<TopicEvent*> (msg);
+        MsgQueue* msgQ = dynamic_cast<MsgQueue*>(this->getModuleMsgQueue());
+        if (msgQ) {
+            TopicEvent* rcvMsg = dynamic_cast<TopicEvent*>(msg);
             simtime_t time = simTime() - rcvMsg->getTimeGenerated();
+
+//            cout << "---------> Module" << this->getName() << " Time: " << time << endl;
+
+
+            emit(qlat, time);
             delete rcvMsg;
-//            emit(qTotalTime, time);
-//            timeMessageVector.record(time);
+            //            emit(qTotalTime, time);
+            //            timeMessageVector.record(time);
 
-//            simtime_t timeComm = (simTime() - rcvMsg->getLastComm()) + rcvMsg->getTotalComm();
-//            rcvMsg->setTotalComm(timeComm);
-//            msgQ->emitTotalComm(rcvMsg->getTotalComm());
-//            msgQ->emitTotalComp(rcvMsg->getTotalComp());
+            //            simtime_t timeComm = (simTime() - rcvMsg->getLastComm()) + rcvMsg->getTotalComm();
+            //            rcvMsg->setTotalComm(timeComm);
+            //            msgQ->emitTotalComm(rcvMsg->getTotalComm());
+            //            msgQ->emitTotalComp(rcvMsg->getTotalComp());
 
-//            emit(qlenTopic, this->queueTopic.getLength());
-//            emit(qMsgSize, rcvMsg->getByteLength());
+            //            emit(qlenTopic, this->queueTopic.getLength());
+            //            emit(qMsgSize, rcvMsg->getByteLength());
 
             msgQ->setRcvMsgs(msgQ->getRcvMsgs() + 1);
             msgQ->refreshDisplay(msgQ->getRcvMsgs(), true);
-//            msgQ->emitTotalTime(time);
-//            emit(qTotalCommTime, rcvMsg->getTotalComm());
-//            emit(qTotalCompTime, rcvMsg->getTotalComp());
+            //            msgQ->emitTotalTime(time);
+            //            emit(qTotalCommTime, rcvMsg->getTotalComm());
+            //            emit(qTotalCompTime, rcvMsg->getTotalComp());
 
-//            EV_WARN << "---------------------------> Total Time: " << time
-//                    << " Comm Time: "  << rcvMsg->getTotalComm()
-//                    << " Comp Time: " << rcvMsg->getTotalComp()
-//                    << "<------------------------------" << endl;
+            //            EV_WARN << "---------------------------> Total Time: " << time
+            //                    << " Comm Time: "  << rcvMsg->getTotalComm()
+            //                    << " Comp Time: " << rcvMsg->getTotalComp()
+            //                    << "<------------------------------" << endl;
 
-        }else{
-            throw cRuntimeError("Something wrong happen to get the MsgQueue Module!");
+        } else {
+            throw cRuntimeError(
+                    "Something wrong happen to get the MsgQueue Module!");
         }
     }
 
 }
 
-cModule* Storage::getModuleMsgQueue(){
+cModule* Storage::getModuleMsgQueue() {
 
     cModule* msgQ = this->getParentModule();
 
@@ -77,7 +84,7 @@ void Storage::setRcvMsgs(int rcvMsgs) {
     mRcvMsgs = rcvMsgs;
 }
 
-void Storage::refreshDisplay(long queueLength) const{
+void Storage::refreshDisplay(long queueLength) const {
     // refresh statistics
     char buf[32];
     sprintf(buf, "Rcv Msg:%ld", queueLength);

@@ -8,7 +8,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
-
+#include <chrono>
 #include "../util/graphS/Graph.h"
 #include "goalrate/GoalRate.h"
 
@@ -24,6 +24,7 @@
 
 using namespace std;
 using namespace omnetpp;
+using namespace chrono;
 
 namespace fogstream {
 
@@ -95,7 +96,9 @@ private:
 
     void scaleStrategySensors(vector<int> &deployable, int operatorId);
     void shorterListofDeployableDevices(int operatorId, vector<int>& edgedevices, vector<int>& clouds);
-    void getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices);
+    void getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices, bool bInTransit);
+
+    void isTimeExceeded();
 public:
     Configuration(Env* &env);
     virtual ~Configuration();
@@ -110,11 +113,17 @@ public:
     void setOrderedByHier(vector<orderListS>& orderedByHier);
     int getConfigScaleApproach() const;
     void setConfigScaleApproach(int configScaleApproach);
+    const high_resolution_clock::time_point& getIntialTime() const;
+    void setIntialTime(const high_resolution_clock::time_point& intialTime);
+    double getLimitTime() const;
+    void setLimitTime(double limitTime);
 
 protected:
     Env* env;
     vector<orderListS> mOrderedByHier;
     int mConfigScaleApproach;
+    double mLimitTime = 60;
+    high_resolution_clock::time_point mIntialTime;
 
 };
 

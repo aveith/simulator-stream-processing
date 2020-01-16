@@ -14,7 +14,7 @@ Env::~Env() {
 }
 
 void Env::addResource(int id, int type, double computAvail, double memAvail,
-        double cost, int slotNumber) {
+        double cost, int slotNumber, int servers) {
     //Add host to the vector
     this->getResources().insert(
             make_pair(id, new ResourceData(id, type, cost)));
@@ -22,7 +22,7 @@ void Env::addResource(int id, int type, double computAvail, double memAvail,
     //Add host capabilities to the vector
     this->getHostCapabilities().insert(
             make_pair(id,
-                    ResourceCapability(id, memAvail, computAvail, slotNumber)));
+                    ResourceCapability(id, memAvail, computAvail, slotNumber, servers)));
 
     if (type == Patterns::DeviceType::Sensor) {
         this->getEdgeDevices().push_back(id);
@@ -462,6 +462,7 @@ vector<int> Env::evaluatePaths(vector<vector<int>> paths, vector<int>& links,
             continue;
 
         if (transferTime < dBestTransferTime) {
+            dBestTransferTime = transferTime;
             iBestPath = i;
             links = vLinks;
         }

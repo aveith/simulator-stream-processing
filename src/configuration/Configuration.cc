@@ -5,6 +5,10 @@
 #include <fstream>
 #include <vector>
 
+#include <ctime>
+#include <array>
+#include <unistd.h>
+#include <numeric>
 #include <string>
 #include <sstream>
 #include <iterator>
@@ -20,6 +24,8 @@ namespace fogstream {
 
 Configuration::Configuration(Env* &env) {
     this->setEnv(env);
+    this->setIntialTime(high_resolution_clock::now());
+    this->setLimitTime(600);
 }
 
 Configuration::~Configuration() {
@@ -111,6 +117,7 @@ void Configuration::setDstBranches(vector<int> cloudDevices,
 void Configuration::ExecuteStrategies(vector<int> orderedList,
         vector<int> resourceList, vector<regionsDep> regions,
         vector<int> cloudDevices, int strategy, bool isUseSlot) {
+
     vector<int> tanejaDeployment;
 
     this->setDstBranches(cloudDevices, regions);
@@ -274,6 +281,7 @@ void Configuration::ExecuteStrategies(vector<int> orderedList,
                     true);
         }
 
+        this->isTimeExceeded();
     }
 
     delete rate;
@@ -832,6 +840,17 @@ int Configuration::setupEnvironment(int strategy, bool isUseSlots,
             std::inserter(this->getEnv()->getResidualHostCapabilities(),
                     this->getEnv()->getResidualHostCapabilities().end()));
 
+    //Update host capabilities according to the number of servers
+    for (unsigned int i = 0;
+            i < this->getEnv()->getResidualHostCapabilities().size(); i++) {
+        this->getEnv()->getResidualHostCapabilities().at(i).setCpu(
+                this->getEnv()->getResidualHostCapabilities().at(i).getCpu()
+                        * this->getEnv()->getResidualHostCapabilities().at(i).getServers());
+        this->getEnv()->getResidualHostCapabilities().at(i).setMemory(
+                this->getEnv()->getResidualHostCapabilities().at(i).getMemory()
+                        * this->getEnv()->getResidualHostCapabilities().at(i).getServers());
+    }
+
     std::copy(this->getEnv()->getLinkCapabilities().begin(),
             this->getEnv()->getLinkCapabilities().end(),
             std::inserter(this->getEnv()->getResidualLinkCapabilities(),
@@ -956,6 +975,9 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
     if (strategy == Patterns::BaseStrategy::CloudOnly) {
         for (unsigned int i = 0; i < this->getEnv()->getCloudServers().size();
                 i++) {
+
+            this->isTimeExceeded();
+
             GoalRate* tempMap = new GoalRate();
             this->placementOverheads(tempMap, operatorId,
                     this->getEnv()->getCloudServers().at(i), false, false);
@@ -1001,6 +1023,8 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
         for (unsigned int iHost = 0; iHost < availableResources.size();
                 iHost++) {
 
+            this->isTimeExceeded();
+
             if (isUseSlot
                     and this->getEnv()->getResidualHostCapabilities().at(
                             availableResources.at(iHost)).getSlotNumber()
@@ -1044,6 +1068,9 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
                         && iHostTypes == Patterns::DeviceType::Sensor)) {
             for (auto it = this->getEnv()->getCloudServers().begin();
                     it != this->getEnv()->getCloudServers().end(); it++) {
+
+                this->isTimeExceeded();
+
                 GoalRate* tempMap = new GoalRate();
                 this->placementOverheads(tempMap, operatorId, *it, false,
                         false);
@@ -1491,8 +1518,11 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
                                 this->getEnv()->getResources().at(
                                         this->getEnv()->getOperatorMapping().at(
                                                 j)->getHostId())->getGatewayId(),
-                                edgedevices);
+                                edgedevices, true);
 
+                        //the device with previous operators also can host the current deployment
+                        edgedevices.push_back(
+                                this->getEnv()->getOperatorMapping().at(j)->getHostId());
                     } else {
                         //in-situ
                         clouds.push_back(
@@ -1525,11 +1555,15 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
                         if (this->getEnv()->getResources().at(
                                 this->getEnv()->getSinks().at(k)->getHostId())->getGatewayId()
                                 > 0) {
-                            //in-situ
+                            //in-situ - Do I need to include in-transit resources for sinks?
                             this->getBestInSituandInTransitDevices(
                                     this->getEnv()->getResources().at(
                                             this->getEnv()->getSinks().at(k)->getHostId())->getGatewayId(),
-                                    edgedevices);
+                                    edgedevices, false);
+
+                            //                            //the sink host is included to the list
+                            edgedevices.push_back(
+                                    this->getEnv()->getSinks().at(k)->getHostId());
 
                         } else {
                             clouds.push_back(
@@ -1557,16 +1591,21 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
         clouds.erase(unique(clouds.begin(), clouds.end()), clouds.end());
     }
 
+    //check capabilities
+
 }
 
-void Configuration::getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices) {
+void Configuration::getBestInSituandInTransitDevices(int gtw,
+        vector<int>& edgedevices, bool bInTransit) {
     double dLatSitu = std::numeric_limits<double>::max();
     double dCPUSitu = std::numeric_limits<double>::min();
-    int iResSitu = -1;
+    int iLatSitu = -1;
+    int iCPUSitu = -1;
 
     double dLatTransit = std::numeric_limits<double>::max();
     double dCPUTransit = std::numeric_limits<double>::min();
-    int iResTransit = -1;
+    int iLatTransit = -1;
+    int iCPUTransit = -1;
 
     for (unsigned int i = 0; i < this->getEnv()->getNetworkTopology().size();
             i++) {
@@ -1576,41 +1615,65 @@ void Configuration::getBestInSituandInTransitDevices(int gtw, vector<int>& edged
             //In-situ
             if (this->getEnv()->getResources().at(
                     this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
-                    == Patterns::DeviceType::Sensor
-                    and dLatSitu
-                            > this->getEnv()->getLinks().at(
-                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
-                dLatSitu =
-                        this->getEnv()->getLinks().at(
-                                this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
-                iResSitu =
-                        this->getEnv()->getResources().at(
-                                this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+                    == Patterns::DeviceType::Sensor) {
+
+                //Lat Based
+                if (dLatSitu
+                        > this->getEnv()->getLinks().at(
+                                this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
+                    dLatSitu =
+                            this->getEnv()->getLinks().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
+                    iLatSitu =
+                            this->getEnv()->getResources().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+                }
+
+                //                //CPU Based
+                //                if (dCPUSitu
+                //                        < this->getEnv()->getResidualHostCapabilities().at(
+                //                                this->getEnv()->getResources().at(
+                //                                        this->getEnv()->getNetworkTopology().at(
+                //                                                i)->getDestinationId())->getId()).getCpu()) {
+                //                    dCPUSitu =
+                //                            this->getEnv()->getResidualHostCapabilities().at(
+                //                                    this->getEnv()->getResources().at(
+                //                                            this->getEnv()->getNetworkTopology().at(
+                //                                                    i)->getDestinationId())->getId()).getCpu();
+                //                    iLatSitu =
+                //                            this->getEnv()->getResources().at(
+                //                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+                //                }
             }
 
-            //In-transit
-            if (this->getEnv()->getResources().at(
-                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
-                    != Patterns::DeviceType::Sensor
-                    and dLatTransit
+            if (bInTransit) {
+                //In-transit Lat based
+                if (this->getEnv()->getResources().at(
+                        this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
+                        != Patterns::DeviceType::Sensor) {
+                    //Lat Based
+                    if (dLatTransit
                             > this->getEnv()->getLinks().at(
                                     this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
-                dLatTransit =
-                        this->getEnv()->getLinks().at(
-                                this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
-                iResTransit =
-                        this->getEnv()->getResources().at(
-                                this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
-            }
+                        dLatTransit =
+                                this->getEnv()->getLinks().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                i)->getLinkId())->getDelay();
+                        iLatTransit =
+                                this->getEnv()->getResources().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                i)->getDestinationId())->getId();
+                    }
+                }
 
+                //In-transit CPU based
+            }
         }
     }
 
-
-
-    if (iResTransit > 0) {
+    if (iLatTransit > 0 and bInTransit) {
         double dLatTransit = std::numeric_limits<double>::max();
-        int gtw2 = iResTransit;
+        int gtw2 = iLatTransit;
         for (unsigned int i = 0;
                 i < this->getEnv()->getNetworkTopology().size(); i++) {
             if (this->getEnv()->getNetworkTopology().at(i)->getSourceId()
@@ -1626,7 +1689,7 @@ void Configuration::getBestInSituandInTransitDevices(int gtw, vector<int>& edged
                     dLatTransit =
                             this->getEnv()->getLinks().at(
                                     this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
-                    iResTransit =
+                    iLatTransit =
                             this->getEnv()->getResources().at(
                                     this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
                 }
@@ -1635,17 +1698,42 @@ void Configuration::getBestInSituandInTransitDevices(int gtw, vector<int>& edged
         }
     }
 
-    if (iResSitu > 0) {
-        edgedevices.push_back(iResSitu);
+    if (iLatSitu > 0) {
+        edgedevices.push_back(iLatSitu);
     }
-    if (iResTransit > 0) {
-        edgedevices.push_back(iResTransit);
+    if (iLatTransit > 0) {
+        edgedevices.push_back(iLatTransit);
     }
 
 }
 
 void Configuration::setConfigScaleApproach(int configScaleApproach) {
     mConfigScaleApproach = configScaleApproach;
+}
+
+const high_resolution_clock::time_point& Configuration::getIntialTime() const {
+    return mIntialTime;
+}
+
+void Configuration::setIntialTime(
+        const high_resolution_clock::time_point& intialTime) {
+    mIntialTime = intialTime;
+}
+
+double Configuration::getLimitTime() const {
+    return mLimitTime;
+}
+
+void Configuration::isTimeExceeded() {
+    duration<double> iteration_duration = high_resolution_clock::now()
+            - this->getIntialTime();
+    if (iteration_duration.count() > this->getLimitTime()) {
+        throw cRuntimeError("Time exceeded!");
+    }
+}
+
+void Configuration::setLimitTime(double limitTime) {
+    mLimitTime = limitTime;
 }
 
 }

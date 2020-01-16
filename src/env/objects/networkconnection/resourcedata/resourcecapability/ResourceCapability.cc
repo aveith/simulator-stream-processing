@@ -3,11 +3,12 @@
 namespace fogstream {
 
 ResourceCapability::ResourceCapability(int hostId, double memory, double cpu,
-        int slotNumber) {
+        int slotNumber, int servers) {
     this->setHostId(hostId);
     this->setMemory(memory);
     this->setCpu(cpu);
     this->setSlotNumber(slotNumber);
+    this->setServers(servers);
 }
 
 ResourceCapability::~ResourceCapability() {
@@ -38,12 +39,22 @@ void ResourceCapability::setMemory(double memory) {
     mMemory = memory;
 }
 
-} /* namespace fogstream */
-
-int fogstream::ResourceCapability::getSlotNumber() const {
+int ResourceCapability::getSlotNumber() const {
     return mSlotNumber;
 }
 
-void fogstream::ResourceCapability::setSlotNumber(int slotNumber) {
+void ResourceCapability::setSlotNumber(int slotNumber) {
     mSlotNumber = slotNumber;
 }
+
+int ResourceCapability::getServers() const {
+    return mServers;
+}
+
+void ResourceCapability::setServers(int servers) {
+    mServers = servers;
+}
+
+
+} /* namespace fogstream */
+

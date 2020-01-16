@@ -18,6 +18,7 @@ public:
 
 protected:
     int mRcvMsgs;
+    static simsignal_t qlat;
 
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);

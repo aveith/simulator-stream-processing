@@ -46,7 +46,7 @@ public:
 
     //Set up structures
     void addResource(int id, int type, double computAvail, double memAvail,
-            double cost, int slotNumber);
+            double cost, int slotNumber, int servers);
     void addLink(int id, double bandwidth, double delay, double cost);
     void addTask(int id, int fissionID, double selectivity,
             double dataTransferRate, double stateRate, int type,

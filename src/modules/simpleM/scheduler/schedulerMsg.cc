@@ -55,19 +55,21 @@ void SchedulerMsg::initialize() {
                 this->getGenralEnv()->getOperatorMapping().size());
     }
 
-    if (this->getParameters()->isReturnOnlyConfigurationDeployment()) {
-        endSimulation();
-    } else {
-        this->CreateSimulation();
-    }
+    //    if (this->getParameters()->isReturnOnlyConfigurationDeployment()) {
+    //        endSimulation();
+    //    } else {
+    this->CreateSimulation();
+    //    }
 
-    if (this->getParameters()->isReadFromTracedDataReconfig()) {
-        time = high_resolution_clock::now();
-        this->reconfiguration();
-        iteration_duration = high_resolution_clock::now() - time;
-        cout << "Reconfiguration - Total time: "
-                << to_string(iteration_duration.count()) << "\n" << endl;
-        endSimulation();
+    if (!this->getParameters()->isReturnOnlyConfigurationDeployment()) {
+        if (this->getParameters()->isReadFromTracedDataReconfig()) {
+            time = high_resolution_clock::now();
+            this->reconfiguration();
+            iteration_duration = high_resolution_clock::now() - time;
+            cout << "Reconfiguration - Total time: "
+                    << to_string(iteration_duration.count()) << "\n" << endl;
+            endSimulation();
+        }
     }
 
     cMessage* appDeploy = new cMessage("APP-0");
@@ -1156,7 +1158,8 @@ void SchedulerMsg::configuration() {
 
     Configuration* configuration = new Configuration(this->getGenralEnv());
     configuration->setupEnvironment(this->getParameters()->getBaseStrategy(),
-            this->getParameters()->isUseSlots(), this->getParameters()->getConfigScaleApproach());
+            this->getParameters()->isUseSlots(),
+            this->getParameters()->getConfigScaleApproach());
 
     duration<double> iteration_duration = high_resolution_clock::now() - time;
     cout
@@ -1233,7 +1236,13 @@ void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
             double mem = atof((char*) xmlGetProp(cur, (xmlChar*) "mem"));
             double cost = atof((char*) xmlGetProp(cur, (xmlChar*) "cost"));
             int slots = atoi((char*) xmlGetProp(cur, (xmlChar*) "slots"));
-            this->getGenralEnv()->addResource(id, type, cpu, mem, cost, slots);
+            int servers = 1;
+            if (xmlHasProp(cur, (xmlChar*) "servers")) {
+                servers = atoi((char*) xmlGetProp(cur, (xmlChar*) "servers"));
+            }
+
+            this->getGenralEnv()->addResource(id, type, cpu, mem, cost, slots,
+                    servers);
         }
 
         if (cur->type == XML_ELEMENT_NODE
@@ -1252,22 +1261,22 @@ void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
             int dst_type =
                     this->getGenralEnv()->getResources().at(dst_id)->getType();
 
-            if ((src_type == 0 && dst_type == 1)
-                    || (src_type == 1 && dst_type == 0)) {
-                latency = uniform((double) par("lanlat_min"),
-                        (double) par("lanlat_max"), 1);
-                if (src_type == 1 && dst_type == 0) {
-                    bandwidth = 1000000000000000000;
-                    latency = 0;
-                }
-            } else if (src_type == 1 && dst_type == 1) {
-                //                    latency = uniform((double) par("manlat_min"), (double) par("manlat_max"), 2);
-                latency = latency_WAN;
-            } else if ((src_type == 1 && dst_type == 2)
-                    || (src_type == 2 && dst_type == 1)) {
-                //                    latency = uniform((double) par("wanlat_min"), (double) par("wanlat_max"), 3);
-                latency = latency_WAN;
-            }
+//            if ((src_type == 0 && dst_type == 1)
+//                    || (src_type == 1 && dst_type == 0)) {
+//                latency = uniform((double) par("lanlat_min"),
+//                        (double) par("lanlat_max"), 1);
+//                if (src_type == 1 && dst_type == 0) {
+//                    bandwidth = 1000000000000000000;
+//                    latency = 0;
+//                }
+//            } else if (src_type == 1 && dst_type == 1) {
+//                //                    latency = uniform((double) par("manlat_min"), (double) par("manlat_max"), 2);
+//                latency = latency_WAN;
+//            } else if ((src_type == 1 && dst_type == 2)
+//                    || (src_type == 2 && dst_type == 1)) {
+//                //                    latency = uniform((double) par("wanlat_min"), (double) par("wanlat_max"), 3);
+//                latency = latency_WAN;
+//            }
             //            }
 
             EV_INFO << "-*/*/********************************" << src_id << "-"
@@ -1582,9 +1591,11 @@ void SchedulerMsg::ApplicationDeployment() {
 
     }
 
-    cMessage* rescheduling = new cMessage("Rescheduling");
-    rescheduling->setKind(Patterns::MessageType::ReconfigurationScheduling);
-    scheduleAt(simTime() + 1000, rescheduling);
+    if (!this->getParameters()->isReturnOnlyConfigurationDeployment()) {
+        cMessage* rescheduling = new cMessage("Rescheduling");
+        rescheduling->setKind(Patterns::MessageType::ReconfigurationScheduling);
+        scheduleAt(simTime() + 1000, rescheduling);
+    }
 }
 
 vector<int> SchedulerMsg::ParticpatingHostsMapping() {

@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-
-from os import sep
-import sys; sys.path.insert(0, sys.path[0][0:sys.path[0].rfind(sep)])
-
-from lib.prepare_and_run_experiment import main
-
-main()

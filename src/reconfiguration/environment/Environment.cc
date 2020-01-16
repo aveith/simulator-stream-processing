@@ -1598,7 +1598,10 @@ void Environment::CPUActionHeuristic(vector<Action>& available,
                                                         i)).getCpu(),
                                         this->getGeneralEnv()->getHostCapabilities().at(
                                                 this->getGeneralEnv()->getEdgeDevices().at(
-                                                        i)).getSlotNumber())));
+                                                        i)).getSlotNumber(),
+                                        this->getGeneralEnv()->getHostCapabilities().at(
+                                                this->getGeneralEnv()->getEdgeDevices().at(
+                                                        i)).getServers())));
             }
         }
 

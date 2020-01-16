@@ -9,7 +9,7 @@ namespace fogstream {
 
 class ResourceCapability {
 public:
-    ResourceCapability(int hostId, double memory, double cpu, int slotNumber);
+    ResourceCapability(int hostId, double memory, double cpu, int slotNumber, int servers);
     virtual ~ResourceCapability();
     double getCpu() const;
     void setCpu(double cpu);
@@ -19,12 +19,15 @@ public:
     void setMemory(double memory);
     int getSlotNumber() const;
     void setSlotNumber(int slotNumber);
+    int getServers() const;
+    void setServers(int servers);
 
 private:
     int mHostID = -1;
     double mMemory = 0; //bytes
     double mCPU = 0; //IPS
     int mSlotNumber = -1;
+    int mServers = 1;
 };
 
 } /* namespace fogstream */

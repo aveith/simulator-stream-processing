@@ -20,6 +20,7 @@ void Deployer::initialize() {
 }
 
 void Deployer::handleMessage(cMessage *msg) {
+
     TopicEvent* topicEvent = dynamic_cast<TopicEvent*>(msg);
     //The Deployer will check all paths that the message crossed including the
     //  messages which were merged on the windows
@@ -36,6 +37,11 @@ void Deployer::handleMessage(cMessage *msg) {
             }
 
         }
+
+//        if (postion != 2){
+//            int xx;
+//            xx = xx +1;
+//        }
 
         bool bFind = false;
         int gate = -1;
