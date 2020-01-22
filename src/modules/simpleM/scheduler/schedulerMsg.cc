@@ -196,9 +196,9 @@ void SchedulerMsg::readDotApp(const char* appfile) {
 
         for (auto tt = edges.begin(); tt != edges.end(); ++tt) {
 
-            this->AddOperatorUsingDot(edges, sources, tt->from);
+            this->AddOperatorUsingDot(edges, sources, sinks, tt->from);
 
-            this->AddOperatorUsingDot(edges, sources, tt->to);
+            this->AddOperatorUsingDot(edges, sources, sinks, tt->to);
 
         }
 
@@ -916,6 +916,9 @@ void SchedulerMsg::loadParameters() {
     this->getParameters()->setCpuMin(par("cpu_min").doubleValue());
     this->getParameters()->setCpuMax(par("cpu_max").doubleValue());
 
+    this->getParameters()->setCpuSinkMin(par("cpusink_min").doubleValue());
+    this->getParameters()->setCpuSinkMax(par("cpusink_max").doubleValue());
+
     this->getParameters()->setCpuSrcMin(par("cpusrc_min").doubleValue());
     this->getParameters()->setCpuSrcMax(par("cpusrc_max").doubleValue());
 
@@ -1261,22 +1264,22 @@ void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
             int dst_type =
                     this->getGenralEnv()->getResources().at(dst_id)->getType();
 
-//            if ((src_type == 0 && dst_type == 1)
-//                    || (src_type == 1 && dst_type == 0)) {
-//                latency = uniform((double) par("lanlat_min"),
-//                        (double) par("lanlat_max"), 1);
-//                if (src_type == 1 && dst_type == 0) {
-//                    bandwidth = 1000000000000000000;
-//                    latency = 0;
-//                }
-//            } else if (src_type == 1 && dst_type == 1) {
-//                //                    latency = uniform((double) par("manlat_min"), (double) par("manlat_max"), 2);
-//                latency = latency_WAN;
-//            } else if ((src_type == 1 && dst_type == 2)
-//                    || (src_type == 2 && dst_type == 1)) {
-//                //                    latency = uniform((double) par("wanlat_min"), (double) par("wanlat_max"), 3);
-//                latency = latency_WAN;
-//            }
+            //            if ((src_type == 0 && dst_type == 1)
+            //                    || (src_type == 1 && dst_type == 0)) {
+            //                latency = uniform((double) par("lanlat_min"),
+            //                        (double) par("lanlat_max"), 1);
+            //                if (src_type == 1 && dst_type == 0) {
+            //                    bandwidth = 1000000000000000000;
+            //                    latency = 0;
+            //                }
+            //            } else if (src_type == 1 && dst_type == 1) {
+            //                //                    latency = uniform((double) par("manlat_min"), (double) par("manlat_max"), 2);
+            //                latency = latency_WAN;
+            //            } else if ((src_type == 1 && dst_type == 2)
+            //                    || (src_type == 2 && dst_type == 1)) {
+            //                //                    latency = uniform((double) par("wanlat_min"), (double) par("wanlat_max"), 3);
+            //                latency = latency_WAN;
+            //            }
             //            }
 
             EV_INFO << "-*/*/********************************" << src_id << "-"
@@ -1382,7 +1385,7 @@ vector<int> SchedulerMsg::DefineSinksFromDot(vector<edge_raw> edges) {
 }
 
 void SchedulerMsg::AddOperatorUsingDot(vector<edge_raw> edges,
-        vector<int> sources, int operatorId) {
+        vector<int> sources, vector<int> sinks, int operatorId) {
     //Define the characteristic of the operator for using on
     //  defining how to break the application by regions
     int type = this->defineType(edges, operatorId);
@@ -1391,6 +1394,14 @@ void SchedulerMsg::AddOperatorUsingDot(vector<edge_raw> edges,
     for (auto ss = sources.begin(); ss != sources.end(); ++ss) {
         if (*ss == operatorId) {
             bSource = true;
+            break;
+        }
+    }
+
+    bool bSink = false;
+    for (auto ss = sinks.begin(); ss != sinks.end(); ++ss) {
+        if (*ss == operatorId) {
+            bSink = true;
             break;
         }
     }
@@ -1415,10 +1426,17 @@ void SchedulerMsg::AddOperatorUsingDot(vector<edge_raw> edges,
                             uniform((double) par("cpusrc_min"),
                                     (double) par("cpusrc_max"), 12) :
                             (double) par("cpusrc_min")) :
+            bSink ? (
+                    (double) par("cpusink_min") != (double) par("cpusink_max") ?
+                            uniform((double) par("cpusink_min"),
+                                    (double) par("cpusink_max"), 21) :
+                            (double) par("cpusink_min")) :
+
                     ((double) par("cpu_min") != (double) par("cpu_max") ?
                             uniform((double) par("cpu_min"),
                                     (double) par("cpu_max"), 13) :
                             (double) par("cpu_min")), //CPU,
+
             uniform((double) par("memory_min"), (double) par("memory_max"), 14),
             0, false, dWindow);
 }

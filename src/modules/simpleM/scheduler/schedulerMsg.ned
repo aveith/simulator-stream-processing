@@ -23,6 +23,10 @@ simple SchedulerMsg
         double cpu_max = default(1);
         double cpusrc_min = default(1);
         double cpusrc_max = default(1);
+        
+        double cpusink_min = default(1);
+        double cpusink_max = default(1);
+        
         double bytesmsg_min = default(1);
         double bytesmsg_max = default(1);
         double arrivalrate_min = default(1);

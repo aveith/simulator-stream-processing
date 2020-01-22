@@ -96,7 +96,7 @@ private:
     vector<int> DefineSinksFromDot(vector<edge_raw> edges);
 
     void AddOperatorUsingDot(vector<edge_raw> edges, vector<int> sources,
-            int operatorId);
+            vector<int> sinks, int operatorId);
     void AddDataSourcesUsingDot(vector<int> sources);
     void AddDataSinksUsingDot(vector<int> sinks);
 

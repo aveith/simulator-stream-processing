@@ -513,6 +513,22 @@ void Parameters::setConfigScaleApproach(int configScaleApproach) {
     this->mConfigScaleApproach = configScaleApproach;
 }
 
+double Parameters::getCpuSinkMax() const {
+    return mCPUSinkMax;
+}
+
+void Parameters::setCpuSinkMax(double cpuSinkMax) {
+    mCPUSinkMax = cpuSinkMax;
+}
+
+double Parameters::getCpuSinkMin() const {
+    return mCPUSinkMin;
+}
+
+void Parameters::setCpuSinkMin(double cpuSinkMin) {
+    mCPUSinkMin = cpuSinkMin;
+}
+
 } /* namespace fogstream */
 
 

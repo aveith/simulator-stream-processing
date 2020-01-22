@@ -130,6 +130,10 @@ public:
     void setTimeReconfiguration(int timeReconfiguration);
     int getConfigScaleApproach() const;
     void setConfigScaleApproach(int configScaleApproach);
+    double getCpuSinkMax() const;
+    void setCpuSinkMax(double cpuSinkMax);
+    double getCpuSinkMin() const;
+    void setCpuSinkMin(double cpuSinkMin);
 
 protected:
     string mDirectoryToSaveFiles;
@@ -144,6 +148,10 @@ protected:
     double mCPUMax;
     double mCPUSrcMin;
     double mCPUSrcMax;
+
+    double mCPUSinkMin;
+        double mCPUSinkMax;
+
     double mMemoryMin;
     double mMemoryMax;
     double mArrivalRateMin;

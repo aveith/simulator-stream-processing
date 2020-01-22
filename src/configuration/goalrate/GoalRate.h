@@ -33,12 +33,18 @@ public:
     vector<OperatorConnectionMapping*>& getLinkMapping();
     void setLinkMapping(const vector<OperatorConnectionMapping*>& linkMapping);
     void clear();
+    bool isBtwConstraint() const;
+    void setBtwConstraint(bool btwConstraint);
+    bool isCpuConstraint() const;
+    void setCpuConstraint(bool cpuConstraint);
 
 protected:
     OperatorMapping* mCurrentOperatorMapping = nullptr; //The current operator is considered when estimating the computation
     vector<OperatorMapping*> mPreviousOperatorMapping; //The previous operators are considered when estimating the communication
     vector<OperatorConnectionMapping*> mLinkMapping;
     bool mConstrained = false;
+    bool mCPUConstraint = false;
+    bool mBtwConstraint = false;
     double mTotalRate = 0;
 };
 

@@ -95,8 +95,10 @@ private:
     vector<int> OperatorOrdering();
 
     void scaleStrategySensors(vector<int> &deployable, int operatorId);
-    void shorterListofDeployableDevices(int operatorId, vector<int>& edgedevices, vector<int>& clouds);
-    void getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices, bool bInTransit);
+    void shorterListofDeployableDevices(int operatorId,
+            vector<int>& edgedevices, vector<int>& clouds);
+    void getBestInSituandInTransitDevices(int gtw, vector<int>& edgedevices,
+            vector<int>& clouds, bool bInTransit, double reqCPU);
 
     void isTimeExceeded();
 public:

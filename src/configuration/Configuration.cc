@@ -25,7 +25,7 @@ namespace fogstream {
 Configuration::Configuration(Env* &env) {
     this->setEnv(env);
     this->setIntialTime(high_resolution_clock::now());
-    this->setLimitTime(600);
+    this->setLimitTime(300);
 }
 
 Configuration::~Configuration() {
@@ -206,6 +206,18 @@ void Configuration::ExecuteStrategies(vector<int> orderedList,
                             rate->getCurrentOperatorMapping()->getHostId()).getMemory()
                             - rate->getCurrentOperatorMapping()->getRequiredMemory());
 
+            cout << "Operator: "
+                    << rate->getCurrentOperatorMapping()->getOperatorId()
+                    << " Host: "
+                    << rate->getCurrentOperatorMapping()->getHostId()
+                    << " Host type "
+                    << this->getEnv()->getResources().at(
+                            rate->getCurrentOperatorMapping()->getHostId())->getType()
+                    << " Residual CPU: "
+                    << this->getEnv()->getResidualHostCapabilities().at(
+                            rate->getCurrentOperatorMapping()->getHostId()).getCpu()
+                    << endl;
+
         }
 
         //Insert the link mappings
@@ -262,9 +274,19 @@ void Configuration::ExecuteStrategies(vector<int> orderedList,
         }
 
         if (rate->isConstrained()) {
-            throw cRuntimeError(
-                    "Constrained environment for deploying operator %d! The rate structure has constraints.",
-                    *ope);
+            if (rate->isBtwConstraint()) {
+                throw cRuntimeError(
+                        "Constrained environment for deploying operator %d! The rate structure has Bandwidth constraints.",
+                        *ope);
+            } else if (rate->isCpuConstraint()) {
+                throw cRuntimeError(
+                        "Constrained environment for deploying operator %d! The rate structure has CPU constraints.",
+                        *ope);
+            } else {
+                throw cRuntimeError(
+                        "Constrained environment for deploying operator %d! The rate structure has constraints.",
+                        *ope);
+            }
         }
 
         //Setup all nodes that participate on the operator deployment
@@ -1015,8 +1037,20 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
             for (unsigned int iHost = 0;
                     iHost < this->getEnv()->getDeployableHosts().size();
                     iHost++) {
-                availableResources.push_back(
-                        this->getEnv()->getDeployableHosts().at(iHost));
+                bool isSink = false;
+                for (unsigned int iSink = 0;
+                        iSink < this->getEnv()->getSinks().size(); iSink++) {
+                    if (this->getEnv()->getSinks().at(iSink)->getHostId()
+                            == this->getEnv()->getDeployableHosts().at(iHost)) {
+                        isSink = true;
+                        break;
+                    }
+                }
+
+                if (!isSink) {
+                    availableResources.push_back(
+                            this->getEnv()->getDeployableHosts().at(iHost));
+                }
             }
         } //veith 2020/01/13 -- end
 
@@ -1036,6 +1070,9 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
             }
             //if the strategy considers only the rate then the algorithm will calculate the rate for all resources
             // otherwise it will follow the RP
+
+            //            cout << "Resource type: " << this->getEnv()->getResources().at(
+            //                    availableResources.at(iHost))->getType() << endl;
             if ((strategy == Patterns::BaseStrategy::RTR
                     && this->getEnv()->getResources().at(
                             availableResources.at(iHost))->getType()
@@ -1058,32 +1095,41 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
             }
         }
 
-        availableResources.clear();
-
         //If the algorithm didn't match a solution for the RP, it will try to place on cloud
         if ((strategy == Patterns::BaseStrategy::RTR
                 && rate->getCurrentOperatorMapping() == nullptr)
                 || (strategy == Patterns::BaseStrategy::RTR_RP
                         && rate->getCurrentOperatorMapping() == nullptr
                         && iHostTypes == Patterns::DeviceType::Sensor)) {
-            for (auto it = this->getEnv()->getCloudServers().begin();
-                    it != this->getEnv()->getCloudServers().end(); it++) {
+
+            //            for (auto it = this->getEnv()->getCloudServers().begin();
+            //                    it != this->getEnv()->getCloudServers().end(); it++) {
+            //
+            for (unsigned int iHost = 0; iHost < availableResources.size();
+                    iHost++) {
 
                 this->isTimeExceeded();
 
-                GoalRate* tempMap = new GoalRate();
-                this->placementOverheads(tempMap, operatorId, *it, false,
-                        false);
-                if (!tempMap->isConstrained()
-                        && tempMap->getTotalRate() < totalRate) {
-                    rate->cloneObject(tempMap);
-                    totalRate = rate->getTotalRate();
-                }
+                if (this->getEnv()->getResources().at(
+                        availableResources.at(iHost))->getType()
+                        == Patterns::DeviceType::Cloud) {
 
-                delete tempMap;
-                tempMap = nullptr;
+                    GoalRate* tempMap = new GoalRate();
+                    this->placementOverheads(tempMap, operatorId,
+                            availableResources.at(iHost), false, false);
+                    if (!tempMap->isConstrained()
+                            && tempMap->getTotalRate() < totalRate) {
+                        rate->cloneObject(tempMap);
+                        totalRate = rate->getTotalRate();
+                    }
+
+                    delete tempMap;
+                    tempMap = nullptr;
+                }
             }
         }
+
+        availableResources.clear();
 
         //If the strategies didn't match a solution, it will raise an exception
         if (rate->getCurrentOperatorMapping() == nullptr) {
@@ -1108,13 +1154,16 @@ void Configuration::placementOverheads(GoalRate* rate, int operatorId,
     if (!onlyComputation) {
         bConstrained = this->estimateCommucation(operatorId, hostId,
                 rate->getPreviousOperatorMapping(), rate->getLinkMapping());
+        rate->setBtwConstraint(bConstrained);
     }
 
-    if (!bConstrained)
+    if (!bConstrained) {
         //Determine the computation overhead
         bConstrained = this->estimateComputation(
                 rate->getCurrentOperatorMapping(),
                 rate->getPreviousOperatorMapping(), isSource);
+        rate->setCpuConstraint(bConstrained);
+    }
 
     //Summarize values
     double totalTime = 0;
@@ -1334,6 +1383,12 @@ bool Configuration::estimateComputation(OperatorMapping* operatorMap,
     double meanTimeinSystem = 0, meanTimeinQueue = 0, meanNumberofMsgsinSystem =
             0, meanNumberinQueue = 0, rho = 0;
 
+    //    cout << "Available: "
+    //            << this->getEnv()->getHostCapabilities().at(
+    //                    operatorMap->getHostId()).getCpu() << " Operator "
+    //            << this->getEnv()->getOperators().at(operatorMap->getOperatorId())->getCPURequirement()
+    //            << endl;
+
     double serviceRate =
             this->getEnv()->getHostCapabilities().at(operatorMap->getHostId()).getCpu()
                     / this->getEnv()->getOperators().at(
@@ -1499,6 +1554,18 @@ void Configuration::scaleStrategySensors(vector<int>& deployable,
 
 void Configuration::shorterListofDeployableDevices(int operatorId,
         vector<int>& edgedevices, vector<int>& clouds) {
+    double arrivalRate = 0, arrivalMsgSize = 0;
+
+    //The arrival rate metrics are evaluated since the operator can have several
+    //  upstream operators. If so, the algorithm summarizes all upstream operators.
+    this->getEnv()->obtaingArrivalMetrics(operatorId, arrivalRate,
+            arrivalMsgSize);
+
+    double reqCPU =
+            arrivalRate
+                    * this->getEnv()->getOperators().at(operatorId)->getCPURequirement();
+
+    double reqBdw = arrivalRate * arrivalMsgSize * 8;
 
     //Get details from previous operators
     for (unsigned int i = 0;
@@ -1513,16 +1580,38 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
                     if (this->getEnv()->getResources().at(
                             this->getEnv()->getOperatorMapping().at(j)->getHostId())->getGatewayId()
                             > 0) {
+
                         //in-situ
                         this->getBestInSituandInTransitDevices(
                                 this->getEnv()->getResources().at(
                                         this->getEnv()->getOperatorMapping().at(
                                                 j)->getHostId())->getGatewayId(),
-                                edgedevices, true);
+                                edgedevices, clouds, true, reqCPU);
 
                         //the device with previous operators also can host the current deployment
-                        edgedevices.push_back(
-                                this->getEnv()->getOperatorMapping().at(j)->getHostId());
+                        if (this->getEnv()->getResidualHostCapabilities().at(
+                                this->getEnv()->getOperatorMapping().at(j)->getHostId()).getCpu()
+                                >= reqCPU) {
+                            bool isSink = false;
+                            for (unsigned int k = 0;
+                                    k < this->getEnv()->getSinks().size();
+                                    k++) {
+
+                                if (this->getEnv()->getSinks().at(k)->getHostId()
+                                        == this->getEnv()->getOperatorMapping().at(
+                                                j)->getHostId()) {
+                                    isSink = true;
+                                    break;
+                                }
+
+                            }
+
+                            if (!isSink) {
+                                edgedevices.push_back(
+                                        this->getEnv()->getOperatorMapping().at(
+                                                j)->getHostId());
+                            }
+                        }
                     } else {
                         //in-situ
                         clouds.push_back(
@@ -1547,6 +1636,7 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
 
                 for (unsigned int k = 0; k < this->getEnv()->getSinks().size();
                         k++) {
+
                     if (this->getEnv()->getSinks().at(k)->getOperatorId()
                             == this->getEnv()->getApplicationPaths().at(i).at(
                                     this->getEnv()->getApplicationPaths().at(i).size()
@@ -1559,11 +1649,11 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
                             this->getBestInSituandInTransitDevices(
                                     this->getEnv()->getResources().at(
                                             this->getEnv()->getSinks().at(k)->getHostId())->getGatewayId(),
-                                    edgedevices, false);
+                                    edgedevices, clouds, false, reqCPU);
 
                             //                            //the sink host is included to the list
-                            edgedevices.push_back(
-                                    this->getEnv()->getSinks().at(k)->getHostId());
+                            //                            edgedevices.push_back(
+                            //                                    this->getEnv()->getSinks().at(k)->getHostId());
 
                         } else {
                             clouds.push_back(
@@ -1596,7 +1686,7 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
 }
 
 void Configuration::getBestInSituandInTransitDevices(int gtw,
-        vector<int>& edgedevices, bool bInTransit) {
+        vector<int>& edgedevices, vector<int>& clouds, bool bInTransit, double reqCPU) {
     double dLatSitu = std::numeric_limits<double>::max();
     double dCPUSitu = std::numeric_limits<double>::min();
     int iLatSitu = -1;
@@ -1607,6 +1697,11 @@ void Configuration::getBestInSituandInTransitDevices(int gtw,
     int iLatTransit = -1;
     int iCPUTransit = -1;
 
+    double dLatCloud = std::numeric_limits<double>::max();
+    double dCPUCloud = std::numeric_limits<double>::min();
+    int iLatCloud = -1;
+    int iCPUCloud = -1;
+
     for (unsigned int i = 0; i < this->getEnv()->getNetworkTopology().size();
             i++) {
 
@@ -1616,34 +1711,54 @@ void Configuration::getBestInSituandInTransitDevices(int gtw,
             if (this->getEnv()->getResources().at(
                     this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
                     == Patterns::DeviceType::Sensor) {
+                bool isSink = false;
+                for (unsigned int k = 0; k < this->getEnv()->getSinks().size();
+                        k++) {
+                    if (this->getEnv()->getResources().at(
+                            this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId()
+                            == this->getEnv()->getSinks().at(k)->getHostId()) {
+                        isSink = true;
+                        break;
+                    }
 
-                //Lat Based
-                if (dLatSitu
-                        > this->getEnv()->getLinks().at(
-                                this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
-                    dLatSitu =
-                            this->getEnv()->getLinks().at(
-                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
-                    iLatSitu =
-                            this->getEnv()->getResources().at(
-                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
                 }
 
-                //                //CPU Based
-                //                if (dCPUSitu
-                //                        < this->getEnv()->getResidualHostCapabilities().at(
-                //                                this->getEnv()->getResources().at(
-                //                                        this->getEnv()->getNetworkTopology().at(
-                //                                                i)->getDestinationId())->getId()).getCpu()) {
-                //                    dCPUSitu =
-                //                            this->getEnv()->getResidualHostCapabilities().at(
-                //                                    this->getEnv()->getResources().at(
-                //                                            this->getEnv()->getNetworkTopology().at(
-                //                                                    i)->getDestinationId())->getId()).getCpu();
-                //                    iLatSitu =
-                //                            this->getEnv()->getResources().at(
-                //                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
-                //                }
+                //Lat Based
+                if (!isSink) {
+                    if (this->getEnv()->getResidualHostCapabilities().at(
+                            this->getEnv()->getResources().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId()).getCpu()
+                            >= reqCPU) {
+                        if (dLatSitu
+                                > this->getEnv()->getLinks().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                i)->getLinkId())->getDelay()) {
+                            dLatSitu =
+                                    this->getEnv()->getLinks().at(
+                                            this->getEnv()->getNetworkTopology().at(
+                                                    i)->getLinkId())->getDelay();
+                            iLatSitu =
+                                    this->getEnv()->getResources().at(
+                                            this->getEnv()->getNetworkTopology().at(
+                                                    i)->getDestinationId())->getId();
+                        }
+                        //                //CPU Based
+                        //                if (dCPUSitu
+                        //                        < this->getEnv()->getResidualHostCapabilities().at(
+                        //                                this->getEnv()->getResources().at(
+                        //                                        this->getEnv()->getNetworkTopology().at(
+                        //                                                i)->getDestinationId())->getId()).getCpu()) {
+                        //                    dCPUSitu =
+                        //                            this->getEnv()->getResidualHostCapabilities().at(
+                        //                                    this->getEnv()->getResources().at(
+                        //                                            this->getEnv()->getNetworkTopology().at(
+                        //                                                    i)->getDestinationId())->getId()).getCpu();
+                        //                    iLatSitu =
+                        //                            this->getEnv()->getResources().at(
+                        //                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+                        //                }
+                    }
+                }
             }
 
             if (bInTransit) {
@@ -1666,7 +1781,23 @@ void Configuration::getBestInSituandInTransitDevices(int gtw,
                     }
                 }
 
-                //In-transit CPU based
+                if (this->getEnv()->getResources().at(
+                        this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getType()
+                        == Patterns::DeviceType::Cloud) {
+                    //Lat Based
+                    if (dLatCloud
+                            > this->getEnv()->getLinks().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay()) {
+                        dLatCloud =
+                                this->getEnv()->getLinks().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                i)->getLinkId())->getDelay();
+                        iLatCloud =
+                                this->getEnv()->getResources().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                i)->getDestinationId())->getId();
+                    }
+                }
             }
         }
     }
@@ -1686,12 +1817,34 @@ void Configuration::getBestInSituandInTransitDevices(int gtw,
                                 < this->getEnv()->getLinks().at(
                                         this->getEnv()->getNetworkTopology().at(
                                                 i)->getLinkId())->getDelay()) {
-                    dLatTransit =
-                            this->getEnv()->getLinks().at(
-                                    this->getEnv()->getNetworkTopology().at(i)->getLinkId())->getDelay();
-                    iLatTransit =
+                    if (this->getEnv()->getResidualHostCapabilities().at(
                             this->getEnv()->getResources().at(
-                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId();
+                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId()).getCpu()
+                            >= reqCPU) {
+                        bool isSink = false;
+                        for (unsigned int k = 0;
+                                k < this->getEnv()->getSinks().size(); k++) {
+                            if (this->getEnv()->getResources().at(
+                                    this->getEnv()->getNetworkTopology().at(i)->getDestinationId())->getId()
+                                    == this->getEnv()->getSinks().at(k)->getHostId()) {
+                                isSink = true;
+                                break;
+                            }
+
+                        }
+
+                        if (!isSink) {
+                            dLatTransit =
+                                    this->getEnv()->getLinks().at(
+                                            this->getEnv()->getNetworkTopology().at(
+                                                    i)->getLinkId())->getDelay();
+                            iLatTransit =
+                                    this->getEnv()->getResources().at(
+                                            this->getEnv()->getNetworkTopology().at(
+                                                    i)->getDestinationId())->getId();
+                        }
+                    }
+
                 }
 
             }
@@ -1703,6 +1856,9 @@ void Configuration::getBestInSituandInTransitDevices(int gtw,
     }
     if (iLatTransit > 0) {
         edgedevices.push_back(iLatTransit);
+    }
+    if (iLatCloud > 0) {
+        clouds.push_back(iLatCloud);
     }
 
 }

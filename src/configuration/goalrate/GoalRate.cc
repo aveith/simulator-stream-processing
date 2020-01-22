@@ -98,3 +98,18 @@ void GoalRate::cloneObject(GoalRate* rate) {
 
 } /* namespace fogstream */
 
+bool fogstream::GoalRate::isBtwConstraint() const {
+    return mBtwConstraint;
+}
+
+void fogstream::GoalRate::setBtwConstraint(bool btwConstraint) {
+    mBtwConstraint = btwConstraint;
+}
+
+bool fogstream::GoalRate::isCpuConstraint() const {
+    return mCPUConstraint;
+}
+
+void fogstream::GoalRate::setCpuConstraint(bool cpuConstraint) {
+    mCPUConstraint = cpuConstraint;
+}
