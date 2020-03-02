@@ -11,6 +11,7 @@
 #include <chrono>
 #include "../util/graphS/Graph.h"
 #include "goalrate/GoalRate.h"
+#include "taneja/resource/ResourceBase.h"
 
 #include "../env/Env.h"
 
@@ -61,8 +62,8 @@ private:
 
     /***********************************************************************/
     vector<int> LowerBoundTaneja(vector<int> orderedList, bool isUseSlot);
-    int lowerBound(vector<ResourceCapability> nodes, OperatorData* tasksTemp,
-            int low, int high, double cpuRequirement);
+    int lowerBound(vector<ResourceBase*> nodes, OperatorData* tasksTemp,
+            int low, int high, double cpuRequirement, double btwReq);
 
     vector<applicationMetrics> basicApplicationArrivalRates(
             vector<int> orderedList);

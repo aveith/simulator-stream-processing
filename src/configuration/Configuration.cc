@@ -22,10 +22,10 @@
 
 namespace fogstream {
 
-Configuration::Configuration(Env* &env) {
+Configuration::Configuration(Env *&env) {
     this->setEnv(env);
     this->setIntialTime(high_resolution_clock::now());
-    this->setLimitTime(300);
+    this->setLimitTime(600);
 }
 
 Configuration::~Configuration() {
@@ -133,7 +133,7 @@ void Configuration::ExecuteStrategies(vector<int> orderedList,
 
     cout << "\nExecuting the operator placement strategy - "
             << to_string(strategy) << ":" << endl;
-    GoalRate* rate = new GoalRate();
+    GoalRate *rate = new GoalRate();
     for (auto ope = orderedList.begin(); ope != orderedList.end(); ++ope) {
         cout << "--- Evaluating the placement of the operator: " << *ope
                 << endl;
@@ -333,7 +333,7 @@ vector<regionsDep> Configuration::getRegions() {
     //It will be included two dummies nodes. One of them will be in front of all data sources
     //  and the another will be after all data sinks, then the application will have only
     //  one data source and one data sink.
-    Graph* graphApp = new Graph(this->getEnv()->getOperators().size() + 2);
+    Graph *graphApp = new Graph(this->getEnv()->getOperators().size() + 2);
 
     for (unsigned int i = 0;
             i < this->getEnv()->getApplicationTopology().size(); ++i) {
@@ -467,7 +467,7 @@ vector<DestinationBranches> Configuration::RegionBranchesFromDataSoures(
     //It will be included two dummies nodes. One of them will be in front of all data sources
     //  and the another will be after all data sinks, then the application will have only
     //  one data source and one data sink.
-    Graph* graphApp = new Graph(this->getEnv()->getOperators().size() + 2);
+    Graph *graphApp = new Graph(this->getEnv()->getOperators().size() + 2);
 
     for (unsigned int i = 0;
             i < this->getEnv()->getApplicationTopology().size(); ++i) {
@@ -518,8 +518,10 @@ vector<DestinationBranches> Configuration::RegionBranchesFromDataSoures(
     }
 
     sort(dataSourceBranches.begin(), dataSourceBranches.end(),
-            []( const DestinationBranches &left, const DestinationBranches &right )
-            {   return ( left.getType() > right.getType());});
+            [](const DestinationBranches &left,
+                    const DestinationBranches &right) {
+                return (left.getType() > right.getType());
+            });
     return dataSourceBranches;
 }
 
@@ -642,8 +644,9 @@ vector<int> Configuration::orderByRegion(vector<regionsDep> regions) {
     //EV_INFO << " Total Tasks " << this->orderByHier.size() << endl;
 
     sort(this->getOrderedByHier().begin(), this->getOrderedByHier().end(),
-            []( const orderListS &left, const orderListS &right )
-            {   return ( left.level < right.level);});
+            [](const orderListS &left, const orderListS &right) {
+                return (left.level < right.level);
+            });
 
     for (auto rr = this->getOrderedByHier().begin();
             rr != this->getOrderedByHier().end(); ++rr) {
@@ -719,25 +722,59 @@ void Configuration::hierarchyOrder(vector<int> branch,
 vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
         bool isUseSlot) {
 
+    //Estimate the number of input and output rates on each operator based on the sources
     vector<applicationMetrics> appMetrics = this->basicApplicationArrivalRates(
             orderedList);
 
+    //Create the vector for the taneja's deployment
     vector<int> tempMap(this->getEnv()->getOperators().size());
 
     //Copy the resources to a local list to sort
-    vector<ResourceCapability> hostCapacities;
+    //    vector<ResourceCapability> hostCapacities;
+    //    for (unsigned int i = 0;
+    //            i < this->getEnv()->getResidualHostCapabilities().size(); i++) {
+    //        if (this->getEnv()->getResources().at(i)->getType()
+    //                != Patterns::DeviceType::Gateway) {
+    //            hostCapacities.push_back(
+    //                    this->getEnv()->getResidualHostCapabilities().at(i));
+    //        }
+    //    }
+
+    vector<ResourceBase*> hostCapacities;
     for (unsigned int i = 0;
             i < this->getEnv()->getResidualHostCapabilities().size(); i++) {
         if (this->getEnv()->getResources().at(i)->getType()
                 != Patterns::DeviceType::Gateway) {
+            double btw = std::numeric_limits<double>::max();
+            for (unsigned int j = 0;
+                    j < this->getEnv()->getNetworkTopology().size(); j++) {
+                if (this->getEnv()->getNetworkTopology().at(j)->getSourceId()
+                        == this->getEnv()->getResidualHostCapabilities().at(i).getHostId()) {
+                    if (this->getEnv()->getLinkCapabilities().at(
+                            this->getEnv()->getNetworkTopology().at(j)->getLinkId()).getBandwidth()
+                            < btw) {
+                        btw =
+                                this->getEnv()->getLinkCapabilities().at(
+                                        this->getEnv()->getNetworkTopology().at(
+                                                j)->getLinkId()).getBandwidth();
+                    }
+                }
+
+            }
+
             hostCapacities.push_back(
-                    this->getEnv()->getResidualHostCapabilities().at(i));
+                    new ResourceBase(
+                            this->getEnv()->getResidualHostCapabilities().at(i).getHostId(),
+                            this->getEnv()->getResidualHostCapabilities().at(i).getCpu(),
+                            this->getEnv()->getResidualHostCapabilities().at(i).getMemory(),
+                            btw));
         }
     }
 
     sort(hostCapacities.begin(), hostCapacities.end(),
-            []( ResourceCapability &left, ResourceCapability &right )
-            {   return ( left.getCpu() < right.getCpu());});
+            [](ResourceBase *&left, ResourceBase *&right) {
+                return (left->getCpu() > right->getCpu());
+            });
 
     //Copy the operators to a local list to sort
     vector<OperatorData*> operators;
@@ -759,50 +796,83 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
     }
 
     sort(operators.begin(), operators.end(),
-            []( OperatorData* &left, OperatorData* &right )
-            {   return ( left->getCPURequirement() < right->getCPURequirement() );});
+            [](OperatorData *&left, OperatorData *&right) {
+                return (left->getCPURequirement() > right->getCPURequirement());
+            });
 
     int low = 0, high = hostCapacities.size() - 1;
 
     for (unsigned int start = 0; start < operators.size(); ++start) {
+        cout << "Operator: " << operators[start]->getId() << endl;
+
         double cpuRequirement = this->getEnv()->getOperators().at(
                 operators[start]->getId())->getCPURequirement()
                 * appMetrics.at(operators[start]->getId()).mNumberofMessages;
 
-        int bound = this->lowerBound(hostCapacities, operators[start], low,
-                high, cpuRequirement);
-
+        double btwReq = appMetrics.at(operators[start]->getId()).mSizeofMessages
+                * 8;
         int iHost = -1;
-        if (bound != -1) {
-            iHost = hostCapacities.at(bound).getHostId();
-            low = bound + 1;
-        } else {
-            iHost = hostCapacities.at(hostCapacities.size() - 1).getHostId();
+
+        for (unsigned int ss = 0; ss < this->getEnv()->getSources().size(); ss++) {
+            if (this->getEnv()->getSources().at(ss)->getOperatorId()
+                    == operators[start]->getId()) {
+                iHost = this->getEnv()->getSources().at(ss)->getHostId();
+                break;
+            }
         }
 
-        tempMap.at(start) = iHost;
+        if (iHost == -1) {
+            for (unsigned int ss = 0; ss < this->getEnv()->getSinks().size(); ss++) {
+                if (this->getEnv()->getSinks().at(ss)->getOperatorId()
+                        == operators[start]->getId()) {
+                    iHost = this->getEnv()->getSinks().at(ss)->getHostId();
+                    break;
+                }
+            }
+        }
+
+        if (iHost == -1) {
+            int bound = this->lowerBound(hostCapacities, operators[start], low,
+                    high, cpuRequirement, btwReq);
+
+            if (bound != -1) {
+                iHost = hostCapacities.at(bound)->getHostId();
+                low = bound + 1;
+            } else {
+                iHost =
+                        hostCapacities.at(hostCapacities.size() - 1)->getHostId();
+            }
+        }
+
+        tempMap.at(operators[start]->getId()) = iHost;
 
         for (unsigned int iNode = 0; iNode < hostCapacities.size(); ++iNode) {
-            if (hostCapacities.at(iNode).getHostId() == iHost) {
+            if (hostCapacities.at(iNode)->getHostId() == iHost) {
 
-                if (isUseSlot && hostCapacities.at(iNode).getSlotNumber() != -1)
-                    hostCapacities.at(iNode).setSlotNumber(
-                            hostCapacities.at(iNode).getSlotNumber() - 1);
+                //                if (isUseSlot && hostCapacities.at(iNode).getSlotNumber() != -1)
+                //                    hostCapacities.at(iNode).setSlotNumber(
+                //                            hostCapacities.at(iNode).getSlotNumber() - 1);
+                //
+                //                if (hostCapacities.at(iNode).getSlotNumber() == 0) {
+                //                    hostCapacities.at(iNode).setCpu(0);
+                //
+                //                } else {
+                hostCapacities.at(iNode)->setCpu(
+                        hostCapacities.at(iNode)->getCpu() - cpuRequirement);
+                hostCapacities.at(iNode)->setBandwidth(
+                        hostCapacities.at(iNode)->getBandwidth() - btwReq);
+                //                }
 
-                if (hostCapacities.at(iNode).getSlotNumber() == 0) {
-                    hostCapacities.at(iNode).setCpu(0);
-
-                } else {
-                    hostCapacities.at(iNode).setCpu(
-                            hostCapacities.at(iNode).getCpu() - cpuRequirement);
-                }
+                cout << "Operator: " << operators[start]->getId() << " Host: "
+                        << iHost << " CPU: " << hostCapacities.at(iNode)->getCpu() << endl;
                 break;
             }
         }
 
         sort(hostCapacities.begin(), hostCapacities.end(),
-                []( ResourceCapability &left, ResourceCapability &right )
-                {   return ( left.getCpu() < right.getCpu());});
+                [](ResourceBase *&left, ResourceBase *&right) {
+                    return (left->getCpu() > right->getCpu());
+                });
     }
 
     for (unsigned int i = 0; i < operators.size(); i++) {
@@ -813,14 +883,16 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
     return tempMap;
 }
 
-int Configuration::lowerBound(vector<ResourceCapability> nodes,
-        OperatorData* tasksTemp, int low, int high, double cpuRequirement) {
+int Configuration::lowerBound(vector<ResourceBase*> nodes,
+        OperatorData *tasksTemp, int low, int high, double cpuRequirement,
+        double btwReq) {
     int length = nodes.size(), mid = (low + high) / 2;
 
     while (true) {
-        ResourceCapability x = nodes.at(mid);
-        bool compare = (x.getCpu() >= cpuRequirement
-                && x.getMemory() >= tasksTemp->getMemoryRequirement());
+        ResourceBase *x = nodes.at(mid);
+        bool compare = (x->getCpu() >= cpuRequirement
+                && x->getMemory() >= tasksTemp->getMemoryRequirement()
+                && x->getBandwidth() >= btwReq);
 
         if (compare) {
             high = mid - 1;
@@ -902,7 +974,7 @@ Env*& Configuration::getEnv() {
     return env;
 }
 
-void Configuration::setEnv(Env*& env) {
+void Configuration::setEnv(Env *&env) {
     this->env = env;
 }
 
@@ -936,16 +1008,19 @@ vector<int> Configuration::defineDeployableHosts(vector<int> &cloudIDs) {
 
     //Sort the vectors by memory
     sort(edgeDevices.begin(), edgeDevices.end(),
-            []( ResourceCapability &left, ResourceCapability &right )
-            {   return ( left.getMemory() > right.getMemory() );});
+            [](ResourceCapability &left, ResourceCapability &right) {
+                return (left.getMemory() > right.getMemory());
+            });
 
     sort(gatewayDevices.begin(), gatewayDevices.end(),
-            []( ResourceCapability &left, ResourceCapability &right )
-            {   return ( left.getMemory() > right.getMemory() );});
+            [](ResourceCapability &left, ResourceCapability &right) {
+                return (left.getMemory() > right.getMemory());
+            });
 
     sort(cloudDevices.begin(), cloudDevices.end(),
-            []( ResourceCapability &left, ResourceCapability &right )
-            {   return ( left.getMemory() > right.getMemory() );});
+            [](ResourceCapability &left, ResourceCapability &right) {
+                return (left.getMemory() > right.getMemory());
+            });
 
     for (unsigned int i = 0; i < cloudDevices.size(); i++) {
         cloudIDs.push_back(cloudDevices.at(i).getHostId());
@@ -965,7 +1040,7 @@ vector<int> Configuration::defineDeployableHosts(vector<int> &cloudIDs) {
     return resourceList;
 }
 
-void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
+void Configuration::determineOperatorPlacement(GoalRate *rate, int strategy,
         int operatorId, vector<int> tanejaDeployment, bool isUseSlot) {
     //If the current operator is a source, it means that there is no communication
     //  overhead
@@ -1000,7 +1075,7 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
 
             this->isTimeExceeded();
 
-            GoalRate* tempMap = new GoalRate();
+            GoalRate *tempMap = new GoalRate();
             this->placementOverheads(tempMap, operatorId,
                     this->getEnv()->getCloudServers().at(i), false, false);
 
@@ -1081,7 +1156,7 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
                             && this->getEnv()->getResources().at(
                                     availableResources.at(iHost))->getType()
                                     == iHostTypes)) {
-                GoalRate* tempMap = new GoalRate();
+                GoalRate *tempMap = new GoalRate();
                 this->placementOverheads(tempMap, operatorId,
                         availableResources.at(iHost), false, false);
                 if (!tempMap->isConstrained()
@@ -1114,7 +1189,7 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
                         availableResources.at(iHost))->getType()
                         == Patterns::DeviceType::Cloud) {
 
-                    GoalRate* tempMap = new GoalRate();
+                    GoalRate *tempMap = new GoalRate();
                     this->placementOverheads(tempMap, operatorId,
                             availableResources.at(iHost), false, false);
                     if (!tempMap->isConstrained()
@@ -1143,7 +1218,7 @@ void Configuration::determineOperatorPlacement(GoalRate* rate, int strategy,
     }
 }
 
-void Configuration::placementOverheads(GoalRate* rate, int operatorId,
+void Configuration::placementOverheads(GoalRate *rate, int operatorId,
         int hostId, bool onlyComputation, bool isSource) {
     bool bConstrained = false;
     rate->setCurrentOperatorMapping(new OperatorMapping());
@@ -1353,7 +1428,7 @@ bool Configuration::estimateCommucation(int OperatorId, int HostId,
     return false;
 }
 
-bool Configuration::estimateComputation(OperatorMapping* operatorMap,
+bool Configuration::estimateComputation(OperatorMapping *operatorMap,
         vector<OperatorMapping*> previousMappings, bool isSource) {
 
     double arrivalRate = 0, arrivalMsgSize = 0;
@@ -1460,10 +1535,10 @@ vector<applicationMetrics> Configuration::basicApplicationArrivalRates(
             if (this->getEnv()->getSources().at(iSource)->getOperatorId()
                     == this->getEnv()->getOperators().at(iOperator)->getId()) {
 
-                metrics.at(iOperator).mNumberofMessages =
+                metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mNumberofMessages =
                         this->getEnv()->getSources().at(iSource)->getArrivalRate();
 
-                metrics.at(iOperator).mSizeofMessages =
+                metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mSizeofMessages =
                         this->getEnv()->getSources().at(iSource)->getArrivalMsgSize();
 
                 bSource = true;
@@ -1477,19 +1552,21 @@ vector<applicationMetrics> Configuration::basicApplicationArrivalRates(
                     iPrevious++) {
                 if (this->getEnv()->getApplicationTopology().at(iPrevious)->getToOperatorId()
                         == this->getEnv()->getOperators().at(iOperator)->getId()) {
-                    metrics.at(iOperator).mNumberofMessages +=
+                    metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mNumberofMessages +=
                             metrics.at(
                                     this->getEnv()->getApplicationTopology().at(
                                             iPrevious)->getFromOperatorId()).mNumberofMessages
-                                    * this->getEnv()->getOperators().at(
-                                            iOperator)->getSelectivity();
+                                    * (1-this->getEnv()->getOperators().at(
+                                            this->getEnv()->getApplicationTopology().at(
+                                                                                        iPrevious)->getFromOperatorId())->getSelectivity());
 
-                    metrics.at(iOperator).mSizeofMessages +=
+                    metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mSizeofMessages +=
                             metrics.at(
                                     this->getEnv()->getApplicationTopology().at(
                                             iPrevious)->getFromOperatorId()).mSizeofMessages
                                     * this->getEnv()->getOperators().at(
-                                            iOperator)->getDataTransferRate();
+                                            this->getEnv()->getApplicationTopology().at(
+                                                                                        iPrevious)->getFromOperatorId())->getDataTransferRate();
                 }
             }
         }
@@ -1507,7 +1584,7 @@ vector<int> Configuration::OperatorOrdering() {
                 this->getEnv()->getSources().at(iSources)->getOperatorId());
     }
 
-    Graph* graphApp = new Graph(this->getEnv()->getOperators().size());
+    Graph *graphApp = new Graph(this->getEnv()->getOperators().size());
 
     for (unsigned int i = 0;
             i < this->getEnv()->getApplicationTopology().size(); ++i) {
@@ -1522,7 +1599,7 @@ vector<int> Configuration::OperatorOrdering() {
     return ordering;
 }
 
-void Configuration::setOrderedByHier(vector<orderListS>& orderedByHier) {
+void Configuration::setOrderedByHier(vector<orderListS> &orderedByHier) {
     mOrderedByHier = orderedByHier;
 }
 
@@ -1530,7 +1607,7 @@ int Configuration::getConfigScaleApproach() const {
     return mConfigScaleApproach;
 }
 
-void Configuration::scaleStrategySensors(vector<int>& deployable,
+void Configuration::scaleStrategySensors(vector<int> &deployable,
         int operatorId) {
 
     vector<int> edgedevices;
@@ -1553,7 +1630,7 @@ void Configuration::scaleStrategySensors(vector<int>& deployable,
 }
 
 void Configuration::shorterListofDeployableDevices(int operatorId,
-        vector<int>& edgedevices, vector<int>& clouds) {
+        vector<int> &edgedevices, vector<int> &clouds) {
     double arrivalRate = 0, arrivalMsgSize = 0;
 
     //The arrival rate metrics are evaluated since the operator can have several
@@ -1686,7 +1763,8 @@ void Configuration::shorterListofDeployableDevices(int operatorId,
 }
 
 void Configuration::getBestInSituandInTransitDevices(int gtw,
-        vector<int>& edgedevices, vector<int>& clouds, bool bInTransit, double reqCPU) {
+        vector<int> &edgedevices, vector<int> &clouds, bool bInTransit,
+        double reqCPU) {
     double dLatSitu = std::numeric_limits<double>::max();
     double dCPUSitu = std::numeric_limits<double>::min();
     int iLatSitu = -1;
@@ -1872,7 +1950,7 @@ const high_resolution_clock::time_point& Configuration::getIntialTime() const {
 }
 
 void Configuration::setIntialTime(
-        const high_resolution_clock::time_point& intialTime) {
+        const high_resolution_clock::time_point &intialTime) {
     mIntialTime = intialTime;
 }
 
