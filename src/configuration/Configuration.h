@@ -63,7 +63,7 @@ private:
     /***********************************************************************/
     vector<int> LowerBoundTaneja(vector<int> orderedList, bool isUseSlot);
     int lowerBound(vector<ResourceBase*> nodes, OperatorData* tasksTemp,
-            int low, int high, double cpuRequirement, double btwReq);
+            int &low, int high, double cpuRequirement, double btwReq);
 
     vector<applicationMetrics> basicApplicationArrivalRates(
             vector<int> orderedList);

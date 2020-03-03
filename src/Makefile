@@ -27,6 +27,8 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/configuration/Configuration.o \
     $O/configuration/goalrate/GoalRate.o \
+    $O/configuration/taneja/operator/OperatorBase.o \
+    $O/configuration/taneja/resource/ResourceBase.o \
     $O/env/Env.o \
     $O/env/objects/application/destinationbranches/DestinationBranches.o \
     $O/env/objects/application/operatorconnection/OperatorConnection.o \

@@ -773,7 +773,7 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
 
     sort(hostCapacities.begin(), hostCapacities.end(),
             [](ResourceBase *&left, ResourceBase *&right) {
-                return (left->getCpu() > right->getCpu());
+                return (left->getCpu() < right->getCpu());
             });
 
     //Copy the operators to a local list to sort
@@ -797,13 +797,17 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
 
     sort(operators.begin(), operators.end(),
             [](OperatorData *&left, OperatorData *&right) {
-                return (left->getCPURequirement() > right->getCPURequirement());
+                return (left->getCPURequirement() < right->getCPURequirement());
             });
 
     int low = 0, high = hostCapacities.size() - 1;
 
     for (unsigned int start = 0; start < operators.size(); ++start) {
-        cout << "Operator: " << operators[start]->getId() << endl;
+        cout << "Operator: " << operators[start]->getId() << " CPU req.: "
+                << this->getEnv()->getOperators().at(operators[start]->getId())->getCPURequirement()
+                << " Arrival: "
+                << appMetrics.at(operators[start]->getId()).mNumberofMessages
+                << endl;
 
         double cpuRequirement = this->getEnv()->getOperators().at(
                 operators[start]->getId())->getCPURequirement()
@@ -813,7 +817,8 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
                 * 8;
         int iHost = -1;
 
-        for (unsigned int ss = 0; ss < this->getEnv()->getSources().size(); ss++) {
+        for (unsigned int ss = 0; ss < this->getEnv()->getSources().size();
+                ss++) {
             if (this->getEnv()->getSources().at(ss)->getOperatorId()
                     == operators[start]->getId()) {
                 iHost = this->getEnv()->getSources().at(ss)->getHostId();
@@ -822,7 +827,8 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
         }
 
         if (iHost == -1) {
-            for (unsigned int ss = 0; ss < this->getEnv()->getSinks().size(); ss++) {
+            for (unsigned int ss = 0; ss < this->getEnv()->getSinks().size();
+                    ss++) {
                 if (this->getEnv()->getSinks().at(ss)->getOperatorId()
                         == operators[start]->getId()) {
                     iHost = this->getEnv()->getSinks().at(ss)->getHostId();
@@ -838,9 +844,11 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
             if (bound != -1) {
                 iHost = hostCapacities.at(bound)->getHostId();
                 low = bound + 1;
+                cout << "Good" << endl;
             } else {
                 iHost =
                         hostCapacities.at(hostCapacities.size() - 1)->getHostId();
+                cout << "Cloud" << endl;
             }
         }
 
@@ -864,14 +872,16 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
                 //                }
 
                 cout << "Operator: " << operators[start]->getId() << " Host: "
-                        << iHost << " CPU: " << hostCapacities.at(iNode)->getCpu() << endl;
+                        << iHost << " CPU: "
+                        << hostCapacities.at(iNode)->getCpu() << " Req.: "
+                        << cpuRequirement << endl;
                 break;
             }
         }
 
         sort(hostCapacities.begin(), hostCapacities.end(),
                 [](ResourceBase *&left, ResourceBase *&right) {
-                    return (left->getCpu() > right->getCpu());
+                    return (left->getCpu() < right->getCpu());
                 });
     }
 
@@ -880,16 +890,21 @@ vector<int> Configuration::LowerBoundTaneja(vector<int> orderedList,
     }
     operators.clear();
 
+    for (unsigned int i = 0; i < hostCapacities.size(); i++) {
+        delete hostCapacities.at(i);
+    }
+    hostCapacities.clear();
+
     return tempMap;
 }
 
 int Configuration::lowerBound(vector<ResourceBase*> nodes,
-        OperatorData *tasksTemp, int low, int high, double cpuRequirement,
+        OperatorData *tasksTemp, int &low, int high, double cpuRequirement,
         double btwReq) {
     int length = nodes.size(), mid = (low + high) / 2;
-
+    ResourceBase *x;
     while (true) {
-        ResourceBase *x = nodes.at(mid);
+        x = nodes.at(mid);
         bool compare = (x->getCpu() >= cpuRequirement
                 && x->getMemory() >= tasksTemp->getMemoryRequirement()
                 && x->getBandwidth() >= btwReq);
@@ -901,7 +916,21 @@ int Configuration::lowerBound(vector<ResourceBase*> nodes,
             }
         } else {
             low = mid + 1;
-            return ((mid < length - 1) ? mid + 1 : -1);
+            if (mid < length - 1) {
+                x = nodes.at(mid + 1);
+                if (x->getCpu() >= cpuRequirement
+                        && x->getMemory() >= tasksTemp->getMemoryRequirement()
+                        && x->getBandwidth() >= btwReq) {
+                    return mid + 1;
+
+                } else {
+                    return -1;
+                }
+            } else {
+                return -1;
+            }
+
+            //            return ((mid < length - 1) ? mid + 1 : -1);
         }
 
         mid = (low + high) / 2;
@@ -1527,18 +1556,18 @@ vector<applicationMetrics> Configuration::basicApplicationArrivalRates(
         vector<int> orderedList) {
     vector<applicationMetrics> metrics(this->getEnv()->getOperators().size());
 
-    for (unsigned int iOperator = 0;
-            iOperator < this->getEnv()->getOperators().size(); iOperator++) {
+    for (unsigned int iOperator = 0; iOperator < orderedList.size();
+            iOperator++) {
         bool bSource = false;
         for (unsigned int iSource = 0;
                 iSource < this->getEnv()->getSources().size(); iSource++) {
             if (this->getEnv()->getSources().at(iSource)->getOperatorId()
-                    == this->getEnv()->getOperators().at(iOperator)->getId()) {
+                    == orderedList.at(iOperator)) {
 
-                metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mNumberofMessages =
+                metrics.at(orderedList.at(iOperator)).mNumberofMessages =
                         this->getEnv()->getSources().at(iSource)->getArrivalRate();
 
-                metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mSizeofMessages =
+                metrics.at(orderedList.at(iOperator)).mSizeofMessages =
                         this->getEnv()->getSources().at(iSource)->getArrivalMsgSize();
 
                 bSource = true;
@@ -1551,22 +1580,23 @@ vector<applicationMetrics> Configuration::basicApplicationArrivalRates(
                     iPrevious < this->getEnv()->getApplicationTopology().size();
                     iPrevious++) {
                 if (this->getEnv()->getApplicationTopology().at(iPrevious)->getToOperatorId()
-                        == this->getEnv()->getOperators().at(iOperator)->getId()) {
-                    metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mNumberofMessages +=
+                        == orderedList.at(iOperator)) {
+                    metrics.at(orderedList.at(iOperator)).mNumberofMessages +=
                             metrics.at(
                                     this->getEnv()->getApplicationTopology().at(
                                             iPrevious)->getFromOperatorId()).mNumberofMessages
-                                    * (1-this->getEnv()->getOperators().at(
-                                            this->getEnv()->getApplicationTopology().at(
-                                                                                        iPrevious)->getFromOperatorId())->getSelectivity());
+                                    * (1
+                                            - this->getEnv()->getOperators().at(
+                                                    this->getEnv()->getApplicationTopology().at(
+                                                            iPrevious)->getFromOperatorId())->getSelectivity());
 
-                    metrics.at(this->getEnv()->getOperators().at(iOperator)->getId()).mSizeofMessages +=
+                    metrics.at(orderedList.at(iOperator)).mSizeofMessages +=
                             metrics.at(
                                     this->getEnv()->getApplicationTopology().at(
                                             iPrevious)->getFromOperatorId()).mSizeofMessages
                                     * this->getEnv()->getOperators().at(
                                             this->getEnv()->getApplicationTopology().at(
-                                                                                        iPrevious)->getFromOperatorId())->getDataTransferRate();
+                                                    iPrevious)->getFromOperatorId())->getDataTransferRate();
                 }
             }
         }
