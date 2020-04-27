@@ -41,20 +41,21 @@ void SchedulerMsg::initialize() {
     cout << "Setup Environment - Total time: "
             << to_string(iteration_duration.count()) << "\n" << endl;
 
-    time = high_resolution_clock::now();
-    this->configuration();
-    iteration_duration = high_resolution_clock::now() - time;
-    cout << "Configuration policies - Total time: "
-            << to_string(iteration_duration.count()) << "\n" << endl;
+    if (!this->getParameters()->isRunIniOperatorPlacement()) {
+        time = high_resolution_clock::now();
+        this->configuration();
+        iteration_duration = high_resolution_clock::now() - time;
+        cout << "Configuration policies - Total time: "
+                << to_string(iteration_duration.count()) << "\n" << endl;
 
-    if (this->getGenralEnv()->getOperatorMapping().size()
-            != this->getGenralEnv()->getOperators().size()) {
-        throw cRuntimeError(
-                "Invalid sequence, the scheduler doesn't find a match  for all operators (Total %d and Mapped %d)",
-                this->getGenralEnv()->getOperators().size(),
-                this->getGenralEnv()->getOperatorMapping().size());
+        if (this->getGenralEnv()->getOperatorMapping().size()
+                != this->getGenralEnv()->getOperators().size()) {
+            throw cRuntimeError(
+                    "Invalid sequence, the scheduler doesn't find a match  for all operators (Total %d and Mapped %d)",
+                    this->getGenralEnv()->getOperators().size(),
+                    this->getGenralEnv()->getOperatorMapping().size());
+        }
     }
-
     //    if (this->getParameters()->isReturnOnlyConfigurationDeployment()) {
     //        endSimulation();
     //    } else {
@@ -72,14 +73,14 @@ void SchedulerMsg::initialize() {
         }
     }
 
-    cMessage* appDeploy = new cMessage("APP-0");
+    cMessage *appDeploy = new cMessage("APP-0");
     appDeploy->setKind(Patterns::MessageType::ApplicationDeployment);
     scheduleAt(simTime(), appDeploy);
 
 }
 
 vector<fix_vertex_position> SchedulerMsg::parse_position(
-        const char* positions) {
+        const char *positions) {
     vector<fix_vertex_position> temp;
 
     cStringTokenizer tokenizer(positions);
@@ -100,9 +101,60 @@ void SchedulerMsg::handleMessage(cMessage *msg) {
         if (this->getGenralEnv()->getOperatorMapping().size() > 0) {
             this->ApplicationDeployment();
 
+            if (this->getParameters()->isRunIniOperatorPlacement()) {
+                cMessage *appSaveStatistics = new cMessage("APP-0");
+                appSaveStatistics->setKind(
+                        Patterns::MessageType::SaveSatistics);
+                scheduleAt(simTime() + 1005, appSaveStatistics);
+            }
+
         } else {
             throw cRuntimeError("There is no application to deploy!");
         }
+
+    } else if (msg->isSelfMessage()
+            && msg->getKind() == Patterns::MessageType::SaveSatistics) {
+        delete msg;
+
+        cout << "Save statistics" << endl;
+        ofstream myfile;
+        myfile.open(par("dir_result").stdstringValue() + "/path.txt");
+
+        for (unsigned int s = 0;
+                s < this->getStatistics()->getPathHistory().size(); s++) {
+            myfile << this->getStatistics()->getPathHistory().at(s)->sTimestamp
+                    << ";"
+                    << this->getStatistics()->getPathHistory().at(s)->iPathID
+                    << ";"
+                    << this->getStatistics()->getPathHistory().at(s)->sTime
+                    << "\n";
+        }
+        myfile.close();
+
+        myfile.open(par("dir_result").stdstringValue() + "/link.txt");
+        for (unsigned int s = 0;
+                s < this->getStatistics()->getLinkHistory().size(); s++) {
+
+            for (unsigned int l = 0;
+                    l < this->getGenralEnv()->getNetworkTopology().size();
+                    l++) {
+                if (this->getGenralEnv()->getNetworkTopology().at(l)->getDestinationId()
+                        == this->getStatistics()->getLinkHistory().at(s)->iHostID2
+                        && this->getGenralEnv()->getNetworkTopology().at(l)->getSourceId()
+                                == this->getStatistics()->getLinkHistory().at(s)->iHostID) {
+                    myfile
+                            << this->getStatistics()->getLinkHistory().at(s)->sTimestamp
+                            << ";"
+                            << this->getGenralEnv()->getNetworkTopology().at(l)->getLinkId()
+                            << ";"
+                            << this->getStatistics()->getLinkHistory().at(s)->dMsgSize
+                            << "\n";
+                }
+
+            }
+
+        }
+        myfile.close();
 
     } else if (msg->isSelfMessage()
             && msg->getKind()
@@ -170,21 +222,21 @@ int SchedulerMsg::defineType(vector<edge_raw> edges, int cur) {
     return type;
 }
 
-void SchedulerMsg::saveToFile(vector<int> vec, const char* file) {
+void SchedulerMsg::saveToFile(vector<int> vec, const char *file) {
     std::ofstream fout(file);
     for (auto x = vec.begin(); x != vec.end(); ++x) {
         fout << *x << '\n';
     }
     fout.close();
 }
-void SchedulerMsg::saveToFileString(std::string text, const char* file) {
+void SchedulerMsg::saveToFileString(std::string text, const char *file) {
     std::ofstream fout(file, std::ofstream::out | std::ofstream::app);
     fout << text << '\n';
 
     fout.close();
 }
 
-void SchedulerMsg::readDotApp(const char* appfile) {
+void SchedulerMsg::readDotApp(const char *appfile) {
     vector<edge_raw> edges = this->ReadAppEdgesFromDot(appfile);
 
     //App validation and
@@ -219,7 +271,7 @@ void SchedulerMsg::readDotApp(const char* appfile) {
 int SchedulerMsg::getMaxHopsSink(vector<int> sinks) {
     int sink = -1;
     //get all possible paths
-    Graph* graphApp = new Graph(
+    Graph *graphApp = new Graph(
             this->getGenralEnv()->getOperators().size() + 2);
 
     for (unsigned int i = 0;
@@ -265,8 +317,8 @@ int SchedulerMsg::getMaxHopsSink(vector<int> sinks) {
     return sink;
 }
 
-void SchedulerMsg::addDataToHistory(cMessage* msg) {
-    Statistic* dataToSave = dynamic_cast<Statistic*>(msg);
+void SchedulerMsg::addDataToHistory(cMessage *msg) {
+    Statistic *dataToSave = dynamic_cast<Statistic*>(msg);
 
     /*Operator statistics*/
     if (dataToSave->getType() == Patterns::StatisticType::Operator) {
@@ -292,6 +344,11 @@ void SchedulerMsg::addDataToHistory(cMessage* msg) {
                 dataToSave->getPathID(), dataToSave->getPathTime(),
                 dataToSave->getCompTime(), dataToSave->getCommTime());
 
+    } else if (dataToSave->getType() == Patterns::StatisticType::LinkUsage) {
+        this->getStatistics()->addLinkUsageHistory(dataToSave->getSTimestamp(),
+                dataToSave->getHostID2(), dataToSave->getHostID(),
+                dataToSave->getMsgSize());
+
     } else if (dataToSave->getType()
             == Patterns::StatisticType::InternalState) {
         this->getStatistics()->addStateHistory(dataToSave->getSTimestamp(),
@@ -304,7 +361,7 @@ void SchedulerMsg::addDataToHistory(cMessage* msg) {
 
 vector<vector<int> > SchedulerMsg::getAllPossiblePaths(
         vector<OperatorConnection*> taskDependencies) {
-    Graph* graphApp = new Graph(
+    Graph *graphApp = new Graph(
             this->getGenralEnv()->getOperators().size() + 2);
 
     for (unsigned int i = 0;
@@ -346,7 +403,7 @@ vector<vector<int> > SchedulerMsg::getAllPossiblePaths(
     return paths;
 }
 
-void SchedulerMsg::createNetworkbyXML(const char* networkfile) {
+void SchedulerMsg::createNetworkbyXML(const char *networkfile) {
     high_resolution_clock::time_point time = high_resolution_clock::now();
     this->FillEnvObjectsUsingXML(networkfile);
 
@@ -382,11 +439,13 @@ void SchedulerMsg::CreateNodeConnections() {
     //Create the connections between the hosts
     for (unsigned int it = 0;
             it < this->getGenralEnv()->getNetworkTopology().size(); ++it) {
-        if (!this->getGenralEnv()->getResources().at(
-                this->getGenralEnv()->getNetworkTopology().at(it)->getDestinationId())->isMapped()
-                || !this->getGenralEnv()->getResources().at(
-                        this->getGenralEnv()->getNetworkTopology().at(it)->getSourceId())->isMapped())
-            continue;
+        if (!this->getParameters()->isRunIniOperatorPlacement()) {
+            if (!this->getGenralEnv()->getResources().at(
+                    this->getGenralEnv()->getNetworkTopology().at(it)->getDestinationId())->isMapped()
+                    || !this->getGenralEnv()->getResources().at(
+                            this->getGenralEnv()->getNetworkTopology().at(it)->getSourceId())->isMapped())
+                continue;
+        }
 
         std::string pathModule =
                 this->getParentModule()->getFullPath() + "."
@@ -397,7 +456,7 @@ void SchedulerMsg::CreateNodeConnections() {
                                 this->getGenralEnv()->getResources().at(
                                         this->getGenralEnv()->getNetworkTopology().at(
                                                 it)->getSourceId())->getType());
-        cModule* srcModule = this->getModuleByPath(pathModule.c_str());
+        cModule *srcModule = this->getModuleByPath(pathModule.c_str());
         srcModule->setGateSize("outExt", srcModule->gateSize("outExt") + 1);
 
         pathModule =
@@ -409,7 +468,7 @@ void SchedulerMsg::CreateNodeConnections() {
                                 this->getGenralEnv()->getResources().at(
                                         this->getGenralEnv()->getNetworkTopology().at(
                                                 it)->getDestinationId())->getType());
-        cModule* dstModule = this->getModuleByPath(pathModule.c_str());
+        cModule *dstModule = this->getModuleByPath(pathModule.c_str());
         dstModule->setGateSize("inExt", dstModule->gateSize("inExt") + 1);
 
         string channelName =
@@ -419,7 +478,7 @@ void SchedulerMsg::CreateNodeConnections() {
                         + to_string(
                                 this->getGenralEnv()->getNetworkTopology().at(
                                         it)->getDestinationId());
-        cDatarateChannel* channel = cDatarateChannel::create(
+        cDatarateChannel *channel = cDatarateChannel::create(
                 channelName.c_str());
         channel->setDatarate(
                 this->getGenralEnv()->getLinkCapabilities().at(
@@ -435,7 +494,7 @@ void SchedulerMsg::CreateNodeConnections() {
 
         //Create connections to the node manager
         pathModule = dstModule->getFullPath() + ".nodeManager";
-        cModule* managerModule = this->getModuleByPath(pathModule.c_str());
+        cModule *managerModule = this->getModuleByPath(pathModule.c_str());
 
         managerModule->setGateSize("inEx", managerModule->gateSize("inEx") + 1);
         dstModule->gate("inExt", dstModule->gateSize("inExt") - 1)->connectTo(
@@ -443,7 +502,7 @@ void SchedulerMsg::CreateNodeConnections() {
                         managerModule->gateSize("inEx") - 1));
 
         pathModule = srcModule->getFullPath() + ".nodeOutput";
-        cModule* outputModule = this->getModuleByPath(pathModule.c_str());
+        cModule *outputModule = this->getModuleByPath(pathModule.c_str());
 
         outputModule->setGateSize("outEx", outputModule->gateSize("outEx") + 1);
         outputModule->gate("outEx", outputModule->gateSize("outEx") - 1)->connectTo(
@@ -455,8 +514,9 @@ void SchedulerMsg::CreateNodeConnections() {
 void SchedulerMsg::CreateNodeModules() {
     for (auto it = this->getGenralEnv()->getResources().begin();
             it != this->getGenralEnv()->getResources().end(); ++it) {
-        if (!it->second->isMapped())
-            continue;
+        if (!this->getParameters()->isReturnOnlyConfigurationDeployment())
+            if (!it->second->isMapped())
+                continue;
 
         cModuleType *mType = cModuleType::get(Patterns::NAME_PROCESS_HOST);
 
@@ -472,7 +532,7 @@ void SchedulerMsg::CreateNodeModules() {
                 //module->callInitialize();
                 module->scheduleStart(simTime());
 
-                cDisplayString& dispstr = module->getDisplayString();
+                cDisplayString &dispstr = module->getDisplayString();
                 dispstr.insertTag("is", 0);
 
                 if (it->second->getType() == Patterns::DeviceType::Sensor) {
@@ -531,7 +591,7 @@ void SchedulerMsg::SetupSchedulerConnection(cModule *module) {
     string src(module->getName());
     string dst(this->getName());
     string channelName = src + "->" + dst;
-    cDatarateChannel* channel = cDatarateChannel::create(channelName.c_str());
+    cDatarateChannel *channel = cDatarateChannel::create(channelName.c_str());
     //                    channel->setDatarate(it->link.bandwidth);
     channel->setDelay(0);
 
@@ -546,7 +606,7 @@ void SchedulerMsg::SetupSchedulerConnection(cModule *module) {
 
     if (opp_strcmp(module->getModuleType()->getName(), "NodeMsg") == 0) {
         string pathModule = module->getFullPath() + ".nodeOutput";
-        cModule* outputModule = this->getModuleByPath(pathModule.c_str());
+        cModule *outputModule = this->getModuleByPath(pathModule.c_str());
         outputModule->setGateSize("outEx", outputModule->gateSize("outEx") + 1);
         outputModule->gate("outEx", outputModule->gateSize("outEx") - 1)->connectTo(
                 module->gate("outExt", module->gateSize("outExt") - 1));
@@ -560,7 +620,7 @@ void SchedulerMsg::SetupSchedulerConnection(cModule *module) {
     src = this->getName();
 
     channelName = src + "->" + dst;
-    cDatarateChannel* channelFromScheduler = cDatarateChannel::create(
+    cDatarateChannel *channelFromScheduler = cDatarateChannel::create(
             channelName.c_str());
     channelFromScheduler->setDelay(0);
 
@@ -577,7 +637,7 @@ void SchedulerMsg::SetupSchedulerConnection(cModule *module) {
     }
 
     if (opp_strcmp(module->getModuleType()->getName(), "NodeMsg") == 0) {
-        cModule* managerModule = this->getModuleByPath(
+        cModule *managerModule = this->getModuleByPath(
                 (module->getFullPath() + ".nodeManager").c_str());
 
         managerModule->setGateSize("inEx", managerModule->gateSize("inEx") + 1);
@@ -588,7 +648,7 @@ void SchedulerMsg::SetupSchedulerConnection(cModule *module) {
     channelFromScheduler->callInitialize();
 }
 
-void SchedulerMsg::createAppbyXML(const char* appfile) {
+void SchedulerMsg::createAppbyXML(const char *appfile) {
     xmlDocPtr doc = xmlReadFile(appfile, NULL, 0);
     xmlNodePtr cur = xmlDocGetRootElement(doc);
     cur = cur->xmlChildrenNode;
@@ -596,8 +656,28 @@ void SchedulerMsg::createAppbyXML(const char* appfile) {
     int iSinkLocated = -1;
     int iSourceLocated = -1;
     while (cur != NULL) {
+        if (this->getParameters()->isRunIniOperatorPlacement()) {
+            if (cur->type == XML_ELEMENT_NODE
+                    && !xmlStrcmp(cur->name, (const xmlChar*) "placement")) {
+                int host_id = atoi(
+                        (char*) xmlGetProp(cur, (xmlChar*) "host_id"));
+                int vertex_id = atoi(
+                        (char*) xmlGetProp(cur, (xmlChar*) "vertex_id"));
+                double computetime = atof(
+                        (char*) xmlGetProp(cur, (xmlChar*) "computetime"));
+                OperatorMapping *map = new OperatorMapping();
+                map->setHostId(host_id);
+                map->setOperatorId(vertex_id);
+                map->setCompTime(computetime);
+
+                this->getGenralEnv()->getOperatorMapping().push_back(
+                        new OperatorMapping(map));
+
+            }
+        }
+
         if (cur->type == XML_ELEMENT_NODE
-                && !xmlStrcmp(cur->name, (const xmlChar *) "vertex")) {
+                && !xmlStrcmp(cur->name, (const xmlChar*) "vertex")) {
             int id = atoi((char*) xmlGetProp(cur, (xmlChar*) "id"));
             double selectivity = atof(
                     (char*) xmlGetProp(cur, (xmlChar*) "selectivity"));
@@ -619,7 +699,7 @@ void SchedulerMsg::createAppbyXML(const char* appfile) {
         }
 
         if (cur->type == XML_ELEMENT_NODE
-                && !xmlStrcmp(cur->name, (const xmlChar *) "edge")) {
+                && !xmlStrcmp(cur->name, (const xmlChar*) "edge")) {
             int src_id = atoi((char*) xmlGetProp(cur, (xmlChar*) "src_id"));
             int dst_id = atoi((char*) xmlGetProp(cur, (xmlChar*) "dst_id"));
             double rho = atof((char*) xmlGetProp(cur, (xmlChar*) "rho"));
@@ -629,7 +709,7 @@ void SchedulerMsg::createAppbyXML(const char* appfile) {
 
         //setup source
         if (cur->type == XML_ELEMENT_NODE
-                && !xmlStrcmp(cur->name, (const xmlChar *) "source")) {
+                && !xmlStrcmp(cur->name, (const xmlChar*) "source")) {
             int host_id = atoi((char*) xmlGetProp(cur, (xmlChar*) "host_id"));
             int vertex_id = atoi(
                     (char*) xmlGetProp(cur, (xmlChar*) "vertex_id"));
@@ -637,6 +717,18 @@ void SchedulerMsg::createAppbyXML(const char* appfile) {
                     (char*) xmlGetProp(cur, (xmlChar*) "arrivalrate"));
             long byteevent = atol(
                     (char*) xmlGetProp(cur, (xmlChar*) "byteevent"));
+
+            if (this->getParameters()->isRunIniOperatorPlacement()) {
+                double computetime = atof(
+                        (char*) xmlGetProp(cur, (xmlChar*) "computetime"));
+                OperatorMapping *map = new OperatorMapping();
+                map->setHostId(host_id);
+                map->setOperatorId(vertex_id);
+                map->setCompTime(computetime);
+
+                this->getGenralEnv()->getOperatorMapping().push_back(
+                        new OperatorMapping(map));
+            }
 
             if ((this->getParameters()->getSourceLocations()
                     == Patterns::XMLLocations::CentralizedCloud
@@ -669,10 +761,22 @@ void SchedulerMsg::createAppbyXML(const char* appfile) {
 
         //setup sink
         if (cur->type == XML_ELEMENT_NODE
-                && !xmlStrcmp(cur->name, (const xmlChar *) "sink")) {
+                && !xmlStrcmp(cur->name, (const xmlChar*) "sink")) {
             int host_id = atoi((char*) xmlGetProp(cur, (xmlChar*) "host_id"));
             int vertex_id = atoi(
                     (char*) xmlGetProp(cur, (xmlChar*) "vertex_id"));
+
+            if (this->getParameters()->isRunIniOperatorPlacement()) {
+                double computetime = atof(
+                        (char*) xmlGetProp(cur, (xmlChar*) "computetime"));
+                OperatorMapping *map = new OperatorMapping();
+                map->setHostId(host_id);
+                map->setOperatorId(vertex_id);
+                map->setCompTime(computetime);
+
+                this->getGenralEnv()->getOperatorMapping().push_back(
+                        new OperatorMapping(map));
+            }
 
             if ((this->getParameters()->getSinkLocations()
                     == Patterns::XMLLocations::CentralizedCloud
@@ -704,10 +808,93 @@ void SchedulerMsg::createAppbyXML(const char* appfile) {
         cur = cur->next;
     }
     xmlFreeDoc(doc);
+
+    if (this->getParameters()->isRunIniOperatorPlacement()) {
+        this->GetLinkMappingRunningDirectly();
+    }
 }
-cModule* SchedulerMsg::createSpecificModule(const char* moduletype, int hostID,
+
+void SchedulerMsg::GetLinkMappingRunningDirectly() {
+    Graph *graphApp = new Graph(
+            this->getGenralEnv()->getNetworkTopology().size());
+
+    for (unsigned int i = 0;
+            i < this->getGenralEnv()->getNetworkTopology().size(); ++i) {
+        graphApp->addEdge(
+                this->getGenralEnv()->getNetworkTopology().at(i)->getSourceId(),
+                this->getGenralEnv()->getNetworkTopology().at(i)->getDestinationId());
+    }
+
+    for (unsigned int i = 0;
+            i < this->getGenralEnv()->getApplicationTopology().size(); i++) {
+        int src = -1;
+        for (unsigned int j = 0;
+                j < this->getGenralEnv()->getOperatorMapping().size(); j++) {
+            if (this->getGenralEnv()->getApplicationTopology().at(i)->getFromOperatorId()
+                    == this->getGenralEnv()->getOperatorMapping().at(j)->getOperatorId()) {
+                src =
+                        this->getGenralEnv()->getOperatorMapping().at(j)->getHostId();
+                break;
+            }
+        }
+
+        int dst = -1;
+        for (unsigned int j = 0;
+                j < this->getGenralEnv()->getOperatorMapping().size(); j++) {
+            if (this->getGenralEnv()->getApplicationTopology().at(i)->getToOperatorId()
+                    == this->getGenralEnv()->getOperatorMapping().at(j)->getOperatorId()) {
+                dst =
+                        this->getGenralEnv()->getOperatorMapping().at(j)->getHostId();
+                break;
+            }
+        }
+
+        if (src != dst) {
+            graphApp->printAllPaths(src, dst);
+
+            vector<vector<int>> paths = graphApp->getPaths();
+
+            int ind = -1;
+            int hops = std::numeric_limits<int>::max();
+
+            for (unsigned int i = 0; i < paths.size(); i++) {
+                if (paths.at(i).size() < hops) {
+                    ind = i;
+                    hops = paths.at(i).size();
+                }
+            }
+
+            for (unsigned p = 1; p < paths[ind].size(); p++) {
+                for (unsigned j = 0;
+                        j < this->getGenralEnv()->getNetworkTopology().size();
+                        j++) {
+                    if (this->getGenralEnv()->getNetworkTopology().at(j)->getSourceId()
+                            == paths[ind].at(p - 1)
+                            && this->getGenralEnv()->getNetworkTopology().at(j)->getDestinationId()
+                                    == paths[ind].at(p)) {
+
+                        this->getGenralEnv()->getLinkMapping().push_back(
+                                new OperatorConnectionMapping(
+                                        this->getGenralEnv()->getApplicationTopology().at(
+                                                i)->getFromOperatorId(),
+                                        this->getGenralEnv()->getApplicationTopology().at(
+                                                i)->getToOperatorId(),
+                                        this->getGenralEnv()->getNetworkTopology().at(
+                                                j)->getLinkId(), 0, 0, 0, 0,
+                                        0));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    delete graphApp;
+}
+
+cModule* SchedulerMsg::createSpecificModule(const char *moduletype, int hostID,
         int vertexID, int direction) {
-    cModule* module;
+    cModule *module;
 
     std::string pathModule = this->getParentModule()->getFullPath() + "."
             + to_string(
@@ -731,7 +918,7 @@ cModule* SchedulerMsg::createSpecificModule(const char* moduletype, int hostID,
             if (direction == 0) {
                 module->setGateSize("outExt", module->gateSize("outExt") + 1);
 
-                cModule* dstModule = this->getModuleByPath(pathModule.c_str());
+                cModule *dstModule = this->getModuleByPath(pathModule.c_str());
                 dstModule->setGateSize("inExt",
                         dstModule->gateSize("inExt") + 1);
 
@@ -741,7 +928,7 @@ cModule* SchedulerMsg::createSpecificModule(const char* moduletype, int hostID,
 
                 //Add connection to the node manager
                 pathModule = pathModule + ".nodeManager";
-                cModule* managerModule = this->getModuleByPath(
+                cModule *managerModule = this->getModuleByPath(
                         pathModule.c_str());
 
                 managerModule->setGateSize("inEx",
@@ -753,7 +940,7 @@ cModule* SchedulerMsg::createSpecificModule(const char* moduletype, int hostID,
             } else {
                 module->setGateSize("inIn", module->gateSize("inIn") + 1);
 
-                cModule* dstModule = this->getModuleByPath(pathModule.c_str());
+                cModule *dstModule = this->getModuleByPath(pathModule.c_str());
                 dstModule->setGateSize("outExt",
                         dstModule->gateSize("outExt") + 1);
 
@@ -762,7 +949,7 @@ cModule* SchedulerMsg::createSpecificModule(const char* moduletype, int hostID,
 
                 //Add connection to the node output
                 pathModule = pathModule + ".nodeOutput";
-                cModule* outputModule = this->getModuleByPath(
+                cModule *outputModule = this->getModuleByPath(
                         pathModule.c_str());
 
                 outputModule->setGateSize("outEx",
@@ -791,13 +978,13 @@ cModule* SchedulerMsg::createSpecificModule(const char* moduletype, int hostID,
 void SchedulerMsg::addVertex(cQueue *verticesQueue, int operatorId,
         int fissionId, float seletivity, float dataReduction, int type,
         float stateIncreaseRate, float memoryCost, float cpuCost,
-        bool nextSplitted, int nextSplitLength, const char* appName,
+        bool nextSplitted, int nextSplitLength, const char *appName,
         float availableCPU, float availableMem, double timeWindow) {
 
     char nameOpe[1024];
     snprintf(nameOpe, 1023, "%d", operatorId);
 
-    Operator* vertexApp = new Operator(nameOpe);
+    Operator *vertexApp = new Operator(nameOpe);
     vertexApp->setOperatorId(operatorId);
     vertexApp->setFissionId(fissionId);
     vertexApp->setSelectivity(seletivity);
@@ -814,16 +1001,28 @@ void SchedulerMsg::addVertex(cQueue *verticesQueue, int operatorId,
     vertexApp->setAvailableMem(availableMem);
     vertexApp->setTimeWindow(timeWindow);
 
+    if (this->getParameters()->isRunIniOperatorPlacement()) {
+        for (unsigned int i = 0;
+                i < this->getGenralEnv()->getOperatorMapping().size(); i++) {
+            if (this->getGenralEnv()->getOperatorMapping().at(i)->getOperatorId()
+                    == operatorId) {
+                vertexApp->setOperatorTime(
+                        this->getGenralEnv()->getOperatorMapping().at(i)->getCompTime());
+                break;
+            }
+        }
+    }
+
     verticesQueue->insert(vertexApp);
 
 }
 
-void SchedulerMsg::addEdge(cQueue *edgesQueue, const char* dstHost,
+void SchedulerMsg::addEdge(cQueue *edgesQueue, const char *dstHost,
         int nextState, int nextSubState, int curState, int curSubState,
-        const char* appName) {
+        const char *appName) {
     char nameOpe[1024];
     snprintf(nameOpe, 1023, "%d-%d", nextState, nextSubState);
-    Edges* edgeApp = new Edges(nameOpe);
+    Edges *edgeApp = new Edges(nameOpe);
     edgeApp->setDstHostName(dstHost);
     edgeApp->setNextState(nextState);
     edgeApp->setNextSubState(nextSubState);
@@ -834,11 +1033,11 @@ void SchedulerMsg::addEdge(cQueue *edgesQueue, const char* dstHost,
     edgesQueue->insert(edgeApp);
 }
 
-void SchedulerMsg::addDep(cQueue *depQueue, const char* appName, int curState,
+void SchedulerMsg::addDep(cQueue *depQueue, const char *appName, int curState,
         int curSubState, int nextState, int nextSubState) {
     char nameOpe[1024];
     snprintf(nameOpe, 1023, "%d-%d", curState, curSubState);
-    OperatorDep* operatorDep = new OperatorDep(nameOpe);
+    OperatorDep *operatorDep = new OperatorDep(nameOpe);
     operatorDep->setAppName(appName);
     operatorDep->setCurState(curState);
     operatorDep->setCurSubState(curSubState);
@@ -854,7 +1053,7 @@ bool SchedulerMsg::isStartReconfig() {
             iSink < this->getGenralEnv()->getSinks().size(); iSink++) {
         for (unsigned int i = 0;
                 i < this->getGenralEnv()->getApplicationPaths().size(); i++) {
-            cModule* storageModule =
+            cModule *storageModule =
                     this->getModuleByPath(
                             (this->getParentModule()->getFullPath() + "."
                                     + "vertex-"
@@ -863,7 +1062,7 @@ bool SchedulerMsg::isStartReconfig() {
                                                     iSink)->getOperatorId())
                                     + "." + "path-" + to_string(i)).c_str());
             if (storageModule) {
-                Storage *storage = check_and_cast<Storage *>(storageModule);
+                Storage *storage = check_and_cast<Storage*>(storageModule);
                 if (storage->getRcvMsgs()
                         < Patterns::SINK_QUEUE_SIZE_RECONFIG) {
                     return false;
@@ -887,7 +1086,7 @@ Parameters*& SchedulerMsg::getParameters() {
     return mParameters;
 }
 
-void SchedulerMsg::setParameters(Parameters* parameters) {
+void SchedulerMsg::setParameters(Parameters *parameters) {
     mParameters = parameters;
 }
 
@@ -1020,6 +1219,9 @@ void SchedulerMsg::loadParameters() {
     this->getParameters()->setConfigScaleApproach(
             par("config_scale_approach").intValue());
 
+    this->getParameters()->setRunIniOperatorPlacement(
+            par("run_ini_operator_placement").boolValue());
+
 }
 
 void SchedulerMsg::reconfiguration() {
@@ -1045,7 +1247,7 @@ void SchedulerMsg::reconfiguration() {
 
     }
 
-    LogMCTS* logExec = new LogMCTS(Patterns::ExecutionLogType::IterationLog,
+    LogMCTS *logExec = new LogMCTS(Patterns::ExecutionLogType::IterationLog,
             this->getParameters()->getDirectoryToSaveFiles()
                     + this->getParameters()->getTestId(),
             this->getParameters());
@@ -1097,7 +1299,7 @@ Env*& SchedulerMsg::getGenralEnv() {
     return mGenralEnv;
 }
 
-void SchedulerMsg::setGenralEnv(Env*& genralEnv) {
+void SchedulerMsg::setGenralEnv(Env *&genralEnv) {
     mGenralEnv = genralEnv;
 }
 
@@ -1105,7 +1307,7 @@ Environment*& SchedulerMsg::getReconfigEnv() {
     return mReconfigEnv;
 }
 
-void SchedulerMsg::setReconfigEnv(Environment*& reconfigEnv) {
+void SchedulerMsg::setReconfigEnv(Environment *&reconfigEnv) {
     mReconfigEnv = reconfigEnv;
 }
 
@@ -1123,7 +1325,7 @@ void SchedulerMsg::setupEnvironment() {
     }
 
     /*Setup environment*/
-    Env* generalenv = new Env(this->getRNG(4));
+    Env *generalenv = new Env(this->getRNG(4));
     this->setGenralEnv(generalenv);
 
     this->createNetworkbyXML(
@@ -1159,7 +1361,7 @@ void SchedulerMsg::setupEnvironment() {
 void SchedulerMsg::configuration() {
     high_resolution_clock::time_point time = high_resolution_clock::now();
 
-    Configuration* configuration = new Configuration(this->getGenralEnv());
+    Configuration *configuration = new Configuration(this->getGenralEnv());
     configuration->setupEnvironment(this->getParameters()->getBaseStrategy(),
             this->getParameters()->isUseSlots(),
             this->getParameters()->getConfigScaleApproach());
@@ -1222,7 +1424,7 @@ vector<int> SchedulerMsg::GetOperatorsList() {
     return orderOperatorList;
 }
 
-void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
+void SchedulerMsg::FillEnvObjectsUsingXML(const char *networkfile) {
     xmlDocPtr doc = xmlReadFile(networkfile, NULL, 0);
     xmlNodePtr cur = xmlDocGetRootElement(doc);
     cur = cur->xmlChildrenNode;
@@ -1232,7 +1434,7 @@ void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
 
     while (cur != NULL) {
         if (cur->type == XML_ELEMENT_NODE
-                && !xmlStrcmp(cur->name, (const xmlChar *) "host")) {
+                && !xmlStrcmp(cur->name, (const xmlChar*) "host")) {
             int id = atoi((char*) xmlGetProp(cur, (xmlChar*) "id"));
             int type = atoi((char*) xmlGetProp(cur, (xmlChar*) "type"));
             double cpu = atof((char*) xmlGetProp(cur, (xmlChar*) "cpu"));
@@ -1249,7 +1451,7 @@ void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
         }
 
         if (cur->type == XML_ELEMENT_NODE
-                && !xmlStrcmp(cur->name, (const xmlChar *) "link")) {
+                && !xmlStrcmp(cur->name, (const xmlChar*) "link")) {
             int id = atoi((char*) xmlGetProp(cur, (xmlChar*) "id"));
             double bandwidth = atof(
                     (char*) xmlGetProp(cur, (xmlChar*) "bandwidth"));
@@ -1296,7 +1498,7 @@ void SchedulerMsg::FillEnvObjectsUsingXML(const char* networkfile) {
     xmlFreeDoc(doc);
 }
 
-vector<edge_raw> SchedulerMsg::ReadAppEdgesFromDot(const char* appfile) {
+vector<edge_raw> SchedulerMsg::ReadAppEdgesFromDot(const char *appfile) {
 
     vector<edge_raw> edges;
 
@@ -1333,8 +1535,9 @@ vector<int> SchedulerMsg::DefineSourcesFromDot(vector<edge_raw> edges) {
     vector<int> sources;
     //Sources definition
     sort(edges.begin(), edges.end(),
-            []( const edge_raw &left, const edge_raw &right )
-            {   return ( left.from < right.from);});
+            [](const edge_raw &left, const edge_raw &right) {
+                return (left.from < right.from);
+            });
 
     int last = -1;
     for (auto from = edges.begin(); from != edges.end(); ++from) {
@@ -1362,8 +1565,9 @@ vector<int> SchedulerMsg::DefineSinksFromDot(vector<edge_raw> edges) {
     vector<int> sinks;
     //Sinks definition
     sort(edges.begin(), edges.end(),
-            []( const edge_raw &left, const edge_raw &right )
-            {   return ( left.to < right.to);});
+            [](const edge_raw &left, const edge_raw &right) {
+                return (left.to < right.to);
+            });
 
     int last = -1;
     for (auto to = edges.begin(); to != edges.end(); ++to) {
@@ -1525,7 +1729,7 @@ void SchedulerMsg::ApplicationDeployment() {
     for (auto iHost = mappedHosts.begin(); iHost != mappedHosts.end();
             ++iHost) {
 
-        cMessage* appDeploy = new cMessage("APP-0");
+        cMessage *appDeploy = new cMessage("APP-0");
         appDeploy->setKind(Patterns::MessageType::ApplicationDeployment);
 
         std::string nameHost =
@@ -1536,10 +1740,10 @@ void SchedulerMsg::ApplicationDeployment() {
                                 this->getGenralEnv()->getResources().at(*iHost)->getType());
 
         //Determine the operator deployments for operators not equal to sinks
-        cQueue* operators = new cQueue(
+        cQueue *operators = new cQueue(
                 getQueueVertexHost(nameHost.c_str()).c_str());
 
-        cQueue* operatorDeployments = new cQueue(
+        cQueue *operatorDeployments = new cQueue(
                 getQueueVertexDep(nameHost.c_str()).c_str());
 
         operators->clear();
@@ -1550,7 +1754,7 @@ void SchedulerMsg::ApplicationDeployment() {
         }
 
         //Determine the edge deployments for edges of operators not equal to sinks
-        cQueue* edgeMappings = new cQueue(
+        cQueue *edgeMappings = new cQueue(
                 getQueueEdgeHost(nameHost.c_str()).c_str());
         edgeMappings->clear();
 
@@ -1583,12 +1787,12 @@ void SchedulerMsg::ApplicationDeployment() {
 
     for (unsigned int iSink = 0;
             iSink < this->getGenralEnv()->getSinks().size(); iSink++) {
-        cMessage* appDeploy = new cMessage("APP-0");
+        cMessage *appDeploy = new cMessage("APP-0");
         appDeploy->setKind(Patterns::MessageType::ApplicationDeployment);
 
         //Determine the application paths
         string pathMSG = Patterns::MSG_PATHS;
-        cQueue* paths = new cQueue(pathMSG.c_str());
+        cQueue *paths = new cQueue(pathMSG.c_str());
         if (this->FillApplicationPathObject(paths)) {
             appDeploy->addObject(paths);
 
@@ -1610,7 +1814,7 @@ void SchedulerMsg::ApplicationDeployment() {
     }
 
     if (!this->getParameters()->isReturnOnlyConfigurationDeployment()) {
-        cMessage* rescheduling = new cMessage("Rescheduling");
+        cMessage *rescheduling = new cMessage("Rescheduling");
         rescheduling->setKind(Patterns::MessageType::ReconfigurationScheduling);
         scheduleAt(simTime() + 1000, rescheduling);
     }
@@ -1656,40 +1860,84 @@ vector<int> SchedulerMsg::ParticpatingHostsMapping() {
     return hosts;
 }
 
-void SchedulerMsg::FillOperatorDeploymentObjects(const char* appName,
-        int hostId, cQueue* operators, cQueue* operatorDeployments) {
+void SchedulerMsg::FillOperatorDeploymentObjects(const char *appName,
+        int hostId, cQueue *operators, cQueue *operatorDeployments) {
 
     for (unsigned int mp = 0;
             mp < this->getGenralEnv()->getOperatorMapping().size(); ++mp) {
         if (this->getGenralEnv()->getOperatorMapping().at(mp)->getHostId()
                 == this->getGenralEnv()->getResources().at(hostId)->getId()) {
-            this->addVertex(operators,
-                    this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getFissionId(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getSelectivity(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getDataTransferRate(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getType(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getStateRate(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getMemoryRequirement(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getCPURequirement(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->isNextSplitted(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getNextSplittedLength(),
-                    appName,
-                    this->getGenralEnv()->getHostCapabilities().at(
-                            this->getGenralEnv()->getResources().at(hostId)->getId()).getCpu(), //mp->availableCPU,
-                    this->getGenralEnv()->getResidualHostCapabilities().at(
-                            this->getGenralEnv()->getResources().at(hostId)->getId()).getMemory(),
-                    this->getGenralEnv()->getOperators().at(
-                            this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId())->getTimeWindow());
+            if (this->getParameters()->isRunIniOperatorPlacement()) {
+                this->addVertex(operators,
+                        this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getFissionId(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getSelectivity(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getDataTransferRate(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getType(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getStateRate(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getMemoryRequirement(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getCPURequirement(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->isNextSplitted(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getNextSplittedLength(),
+                        appName, 0, //mp->availableCPU,
+                        0, 0);
+            } else {
+                this->addVertex(operators,
+                        this->getGenralEnv()->getOperatorMapping().at(mp)->getOperatorId(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getFissionId(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getSelectivity(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getDataTransferRate(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getType(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getStateRate(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getMemoryRequirement(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getCPURequirement(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->isNextSplitted(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getNextSplittedLength(),
+                        appName,
+                        this->getGenralEnv()->getHostCapabilities().at(
+                                this->getGenralEnv()->getResources().at(hostId)->getId()).getCpu(), //mp->availableCPU,
+                        this->getGenralEnv()->getResidualHostCapabilities().at(
+                                this->getGenralEnv()->getResources().at(hostId)->getId()).getMemory(),
+                        this->getGenralEnv()->getOperators().at(
+                                this->getGenralEnv()->getOperatorMapping().at(
+                                        mp)->getOperatorId())->getTimeWindow());
+            }
 
             for (unsigned int dep = 0;
                     dep < this->getGenralEnv()->getApplicationTopology().size();
@@ -1711,8 +1959,8 @@ void SchedulerMsg::FillOperatorDeploymentObjects(const char* appName,
     }
 }
 
-void SchedulerMsg::FillEdgeDeploymentObjects(const char* appName, int hostId,
-        cQueue* edge) {
+void SchedulerMsg::FillEdgeDeploymentObjects(const char *appName, int hostId,
+        cQueue *edge) {
     for (unsigned int mp = 0;
             mp < this->getGenralEnv()->getLinkMapping().size(); ++mp) {
 
@@ -1747,8 +1995,8 @@ void SchedulerMsg::FillEdgeDeploymentObjects(const char* appName, int hostId,
     }
 }
 
-void SchedulerMsg::FillSinkDeploymentObjects(const char* appName, int hostId,
-        cQueue* edge, cQueue* operatorDeployments) {
+void SchedulerMsg::FillSinkDeploymentObjects(const char *appName, int hostId,
+        cQueue *edge, cQueue *operatorDeployments) {
     for (unsigned int iSink = 0;
             iSink < this->getGenralEnv()->getSinks().size(); ++iSink) {
         if (this->getGenralEnv()->getSinks().at(iSink)->getHostId()
@@ -1776,7 +2024,7 @@ void SchedulerMsg::FillSinkDeploymentObjects(const char* appName, int hostId,
     }
 }
 
-bool SchedulerMsg::FillApplicationPathObject(cQueue* paths) {
+bool SchedulerMsg::FillApplicationPathObject(cQueue *paths) {
     if (this->getGenralEnv()->getApplicationPaths().size() > 0) {
         int ss = 0;
         for (unsigned int iPath = 0;
@@ -1804,7 +2052,7 @@ bool SchedulerMsg::FillApplicationPathObject(cQueue* paths) {
 
             ss++;
 
-            OperatorDep* operatorDep = new OperatorDep(pathStr.c_str());
+            OperatorDep *operatorDep = new OperatorDep(pathStr.c_str());
 
             paths->insert(operatorDep);
 
@@ -1898,7 +2146,7 @@ StatisticsMCTS*& SchedulerMsg::getStatistics() {
     return mStatistics;
 }
 
-void SchedulerMsg::setStatistics(StatisticsMCTS*& statistics) {
+void SchedulerMsg::setStatistics(StatisticsMCTS *&statistics) {
     mStatistics = statistics;
 }
 
@@ -1907,7 +2155,7 @@ const vector<fix_vertex_position>& SchedulerMsg::getVertexPositions() const {
 }
 
 void SchedulerMsg::setVertexPositions(
-        const vector<fix_vertex_position>& vertexPositions) {
+        const vector<fix_vertex_position> &vertexPositions) {
     mVertexPositions = vertexPositions;
 }
 
@@ -1923,7 +2171,7 @@ void SchedulerMsg::CreateSimulation() {
     time = high_resolution_clock::now();
     for (unsigned int iSource = 0;
             iSource < this->getGenralEnv()->getSources().size(); iSource++) {
-        cModule* source = this->createSpecificModule(
+        cModule *source = this->createSpecificModule(
                 Patterns::NAME_PROCESS_SOURCE,
                 this->getGenralEnv()->getSources().at(iSource)->getHostId(),
                 this->getGenralEnv()->getSources().at(iSource)->getOperatorId(),
@@ -2000,7 +2248,7 @@ vector<int> SchedulerMsg::GetNumberMessagesPaths() {
             iSink < this->getGenralEnv()->getSinks().size(); iSink++) {
         for (unsigned int i = 0;
                 i < this->getGenralEnv()->getApplicationPaths().size(); i++) {
-            cModule* storageModule =
+            cModule *storageModule =
                     this->getModuleByPath(
                             (this->getParentModule()->getFullPath() + "."
                                     + "vertex-"
@@ -2009,7 +2257,7 @@ vector<int> SchedulerMsg::GetNumberMessagesPaths() {
                                                     iSink)->getOperatorId())
                                     + "." + "path-" + to_string(i)).c_str());
             if (storageModule) {
-                Storage *storage = check_and_cast<Storage *>(storageModule);
+                Storage *storage = check_and_cast<Storage*>(storageModule);
                 messages.at(i) = storage->getRcvMsgs();
             }
 

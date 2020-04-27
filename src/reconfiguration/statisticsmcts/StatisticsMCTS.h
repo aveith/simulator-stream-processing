@@ -41,6 +41,20 @@ struct event_history {
     }
 };
 
+struct link_history {
+    simtime_t sTimestamp;
+    int iHostID;
+    int iHostID2;
+    double dMsgSize;
+    link_history(simtime_t sTimestamp, int iHostID, int iHostID2,
+            double dMsgSize) {
+        this->sTimestamp = sTimestamp;
+        this->iHostID = iHostID;
+        this->iHostID2 = iHostID2;
+        this->dMsgSize = dMsgSize;
+    }
+};
+
 struct state_history {
     simtime_t sTimestamp;
     int iOperatorID;
@@ -123,6 +137,9 @@ public:
     void addStateHistory(simtime_t sTimestamp, int iOperatorID, int iHostID,
             double dStateSize, simtime_t dRequiredTime);
 
+    void addLinkUsageHistory(simtime_t sTimestamp, int iHostID2, int iHostID,
+            double dMsgSize);
+
     /*Operator Statistics*/
     double getOperatorArrivalMsgSize(int iHostID, int iOperatorID,
             simtime_t sBegin, simtime_t sEnd);
@@ -150,33 +167,40 @@ public:
     /*Path Statistics*/
     simtime_t getPathTime(int iPathID, simtime_t sBegin, simtime_t sEnd);
     const simtime_t& getLastSave() const;
-    void setLastSave(const simtime_t& lastSave);
+    void setLastSave(const simtime_t &lastSave);
 
     /*State Statistics*/
-    double getStateSize(int iHostID, int iOperatorID,
-                simtime_t sBegin, simtime_t sEnd);
+    double getStateSize(int iHostID, int iOperatorID, simtime_t sBegin,
+            simtime_t sEnd);
     double getStateRequireTimeBuildWindow(int iHostID, int iOperatorID,
             simtime_t sBegin, simtime_t sEnd);
 
     double getPathCompTime(int iPathID, simtime_t sBegin, simtime_t sEnd);
     double getPathCommTime(int iPathID, simtime_t sBegin, simtime_t sEnd);
     vector<state_history*>& getStateHistory();
-    void setStateHistory(const vector<state_history*>& stateHistory);
+    void setStateHistory(const vector<state_history*> &stateHistory);
     vector<event_history*>& getEventsHistory();
-    void setEventsHistory(const vector<event_history*>& eventsHistory);
-    vector<host_history*>& getHostHistory() ;
-    void setHostHistory(const vector<host_history*>& hostHistory);
-    vector<path_history*>& getPathHistory() ;
-    void setPathHistory(const vector<path_history*>& pathHistory);
+    void setEventsHistory(const vector<event_history*> &eventsHistory);
+    vector<host_history*>& getHostHistory();
+    void setHostHistory(const vector<host_history*> &hostHistory);
+    vector<path_history*>& getPathHistory();
+    void setPathHistory(const vector<path_history*> &pathHistory);
     vector<queue_history*>& getQueueHistory();
-    void setQueueHistory(const vector<queue_history*>& queueHistory);
+    void setQueueHistory(const vector<queue_history*> &queueHistory);
+    vector<link_history*>& getLinkHistory();
+    void setLinkHistory(vector<link_history*> &linkHistory);
 
+    /*Link statistics*/
+//    double getOperatorArrivalMsgSize(int iHostID, int iOperatorID,
+//                simtime_t sBegin, simtime_t sEnd);
 protected:
     vector<event_history*> cEventsHistory;
     vector<queue_history*> cQueueHistory;
     vector<host_history*> cHostHistory;
     vector<path_history*> cPathHistory;
     vector<state_history*> cStateHistory;
+    vector<link_history*> cLinkHistory;
+
     simtime_t cLastSave = 0;
 };
 

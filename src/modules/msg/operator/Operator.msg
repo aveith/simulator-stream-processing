@@ -22,4 +22,5 @@ message Operator {
     double availableMem;
     
     double timeWindow;
+    double operatorTime;
 }

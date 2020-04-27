@@ -134,6 +134,8 @@ public:
     void setCpuSinkMax(double cpuSinkMax);
     double getCpuSinkMin() const;
     void setCpuSinkMin(double cpuSinkMin);
+    bool isRunIniOperatorPlacement() const;
+    void setRunIniOperatorPlacement(bool runIniOperatorPlacement);
 
 protected:
     string mDirectoryToSaveFiles;
@@ -203,6 +205,7 @@ protected:
     int mTimeReconfiguration = -1;
 
     int mConfigScaleApproach = 0;
+    bool mRunIniOperatorPlacement = false;
 };
 
 } /* namespace fogstream */

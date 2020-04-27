@@ -1,7 +1,7 @@
 [RunModeProfiles]
 fast-max-animation-speed=nan
 fast-max-fps=30
-fast-max-playback-speed=1e+6
+fast-max-playback-speed=1e+06
 fast-min-animation-speed=nan
 fast-min-fps=10
 fast-min-playback-speed=1

@@ -44,7 +44,7 @@ void NodeManager::refreshRoutingTable(cMessage *msg) {
 }
 
 void NodeManager::handleMessage(cMessage *msg) {
-    const char* message = msg->getName();
+    const char *message = msg->getName();
     std::string messageName(message);
 
     if (msg->getKind() == Patterns::MessageType::ApplicationDeployment) {
@@ -61,8 +61,8 @@ void NodeManager::handleMessage(cMessage *msg) {
 }
 
 void NodeManager::applicationDeployment(cMessage *msg) {
-    cModule* lastOpe = this;
-    cModule* newOpe = this;
+    cModule *lastOpe = this;
+    cModule *newOpe = this;
     bool opeCreation = false;
 
     if (msg->hasObject(
@@ -71,7 +71,7 @@ void NodeManager::applicationDeployment(cMessage *msg) {
         cObject *obj = msg->getObject(
                 getQueueVertexHost(this->getParentModule()->getName()).c_str());
 
-        cQueue *queueDeploy = check_and_cast<cQueue *>(obj);
+        cQueue *queueDeploy = check_and_cast<cQueue*>(obj);
 
         for (cQueue::Iterator it(*queueDeploy); !it.end(); it++) {
 
@@ -134,7 +134,7 @@ void NodeManager::applicationDeployment(cMessage *msg) {
 }
 
 void NodeManager::sendMsgApp(cMessage *msg) {
-    TopicEvent* rcvMsg = dynamic_cast<TopicEvent*>(msg);
+    TopicEvent *rcvMsg = dynamic_cast<TopicEvent*>(msg);
     //
     //    simtime_t timeComm = (simTime() - rcvMsg->getLastComm())
     //            + rcvMsg->getTotalComm();
@@ -202,8 +202,8 @@ void NodeManager::sendMsgApp(cMessage *msg) {
     }
 }
 
-cModule* NodeManager::createModule(cModule* srcModule, const char* operatorName,
-        const char* appName, Operator* parameters, bool firstModule) {
+cModule* NodeManager::createModule(cModule *srcModule, const char *operatorName,
+        const char *appName, Operator *parameters, bool firstModule) {
     cModuleType *mType = cModuleType::get(Patterns::NAME_PROCESS_ELEMENT);
 
     if (mType) {
@@ -238,7 +238,7 @@ cModule* NodeManager::createModule(cModule* srcModule, const char* operatorName,
 
 }
 
-void NodeManager::addConnections(cModule* srcModule, cModule* dstModule,
+void NodeManager::addConnections(cModule *srcModule, cModule *dstModule,
         bool endModule) {
 
     if (srcModule == this) {
@@ -262,7 +262,7 @@ void NodeManager::addConnections(cModule* srcModule, cModule* dstModule,
 
         //Internal connection between parent module and child
         std::string pathModule = srcModule->getFullPath() + ".operatorMsg";
-        cModule* operatorMsg = srcModule->getModuleByPath(pathModule.c_str());
+        cModule *operatorMsg = srcModule->getModuleByPath(pathModule.c_str());
         operatorMsg->setGateSize("queueNextOut",
                 operatorMsg->gateSize("queueNextOut") + 1);
         operatorMsg->gate("queueNextOut",
@@ -271,7 +271,7 @@ void NodeManager::addConnections(cModule* srcModule, cModule* dstModule,
 
         //Internal connection between child module and parent
         pathModule = dstModule->getFullPath() + ".msgQueue";
-        cModule* queueMsg = dstModule->getModuleByPath(pathModule.c_str());
+        cModule *queueMsg = dstModule->getModuleByPath(pathModule.c_str());
         queueMsg->setGateSize("inIn", queueMsg->gateSize("inIn") + 1);
         dstModule->gate("Queue_port", dstModule->gateSize("Queue_port") - 1)->connectTo(
                 queueMsg->gate("inIn", queueMsg->gateSize("inIn") - 1));
@@ -284,7 +284,7 @@ void NodeManager::addConnections(cModule* srcModule, cModule* dstModule,
 
         //Internal connection between parent module and child
         std::string pathModule = srcModule->getFullPath() + ".operatorMsg";
-        cModule* operatorMsg = srcModule->getModuleByPath(pathModule.c_str());
+        cModule *operatorMsg = srcModule->getModuleByPath(pathModule.c_str());
         operatorMsg->setGateSize("queueNextOut",
                 operatorMsg->gateSize("queueNextOut") + 1);
         operatorMsg->gate("queueNextOut",
@@ -299,13 +299,13 @@ cModule* NodeManager::getModuleOutput() {
     std::string pathModule = this->getParentModule()->getFullPath()
             + ".nodeOutput";
 
-    cModule* moduleOutput = this->getModuleByPath(pathModule.c_str());
+    cModule *moduleOutput = this->getModuleByPath(pathModule.c_str());
 
     return moduleOutput;
 }
 
-void NodeManager::setParModule(const char* appName, cModule *module,
-        Operator* parameters, bool firstModule) {
+void NodeManager::setParModule(const char *appName, cModule *module,
+        Operator *parameters, bool firstModule) {
 
     double cpuCost = 0;
     double memCost = 0;
@@ -399,7 +399,11 @@ void NodeManager::setParModule(const char* appName, cModule *module,
 
     }
 
+    if (module->getModuleByPath(pathModule.c_str())->hasPar("operatorTime")) {
+        module->getModuleByPath(pathModule.c_str())->par("operatorTime").setDoubleValue(
+                parameters->getOperatorTime());
 
+    }
 
     if (module->hasPar("appName")) {
         module->par("appName").setStringValue(appName);
@@ -508,11 +512,11 @@ void NodeManager::setParModule(const char* appName, cModule *module,
 
 }
 
-void NodeManager::AddNetworkRoute(int messageMode, cObject* obj) {
-    cQueue *queueObject = check_and_cast<cQueue *>(obj);
+void NodeManager::AddNetworkRoute(int messageMode, cObject *obj) {
+    cQueue *queueObject = check_and_cast<cQueue*>(obj);
     if (messageMode != MessageMode::NoIteration) {
 
-        NodeOutput* outModule =
+        NodeOutput *outModule =
                 dynamic_cast<NodeOutput*>(this->getModuleOutput());
 
         for (cQueue::Iterator it(*queueObject); !it.end(); it++) {
@@ -540,7 +544,8 @@ void NodeManager::AddNetworkRoute(int messageMode, cObject* obj) {
 
             }
 
-            if(nextOperator == currentOperator && nextFissionId == currentFissionID){
+            if (nextOperator == currentOperator
+                    && nextFissionId == currentFissionID) {
                 hostName = "vertex-" + to_string(nextOperator);
             }
 

@@ -7,6 +7,7 @@ packet Statistic {
         int PathID;
         int OperatorID;
         int HostID;
+        int HostID2;
         double MsgSize;
         int QueueSize;
         simtime_t CompTime;

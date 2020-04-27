@@ -50,7 +50,7 @@ protected:
     int mSentRegs = 0;
     vector<RoutingData*> mRoutingTable;
     unordered_map<int, cQueue*> mScheduledMessages;
-    bool mLogData = false;
+    bool mLogData = true;
 
 private:
     virtual void initialize();

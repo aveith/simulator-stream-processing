@@ -86,6 +86,8 @@ simple SchedulerMsg
         int time_reconfiguration = default(-1);
         
         int config_scale_approach = default(0);
+        
+        bool run_ini_operator_placement=default(false);
     gates:
         input in[];
         output out[];

@@ -1,0 +1,44 @@
+<application>
+      <!--cpu is the number of vCPU required-->
+      <!--vectex0 is a sink operator has nothing to do. same to the vertex11, just a data generator. Real operators are 1-10-->
+      <vertex id="0" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+      <vertex id="1" selectivity="1" transferrate="1" staterate="1" type="0" computreq="4" memreq="1000" timewindow="0"/>
+      <vertex id="2" selectivity="0.2" transferrate="1" staterate="1" type="0" computreq="2" memreq="1000" timewindow="0"/>
+      <vertex id="3" selectivity="0.2" transferrate="1" staterate="1" type="0" computreq="2" memreq="1000" timewindow="0"/>
+      <vertex id="4" selectivity="1" transferrate="0.5" staterate="1" type="0" computreq="4" memreq="1000" timewindow="0"/>
+      <vertex id="5" selectivity="1" transferrate="0.25" staterate="1" type="0" computreq="2" memreq="1000" timewindow="0"/>
+      <vertex id="6" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+      <vertex id="7" selectivity="0.75" transferrate="0.75" staterate="1" type="0" computreq="2" memreq="1000" timewindow="0"/>
+      <vertex id="8" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+      <vertex id="9" selectivity="0.8" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+      <vertex id="10" selectivity="1" transferrate="0.75" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+      <vertex id="11" selectivity="1" transferrate="1" staterate="1" type="0" computreq="1" memreq="1000" timewindow="0"/>
+
+	  
+	  <edge src_id ="0" dst_id="1" rho="1"/>
+	  <edge src_id ="1" dst_id="2" rho="1"/>
+	  <edge src_id ="2" dst_id="3" rho="1"/>
+          <edge src_id ="3" dst_id="4" rho="1"/>
+	  <edge src_id ="4" dst_id="5" rho="1"/>
+	  <edge src_id ="5" dst_id="6" rho="1"/>
+	  <edge src_id ="6" dst_id="7" rho="1"/>
+	  <edge src_id ="7" dst_id="8" rho="1"/>
+	  <edge src_id ="8" dst_id="9" rho="1"/>
+	  <edge src_id ="9" dst_id="10" rho="1"/>
+	  <edge src_id ="10" dst_id="11" rho="1"/>
+	  
+      <!--I am not sure arrivalrate and byteevent so left as default -->
+	  <source host_id="10" vertex_id="0" arrivalrate="10000" byteevent="100" computetime=".002"/>	   	  
+	  <sink host_id="0" vertex_id="11"  computetime=".002"/>	 	 
+      <!--Operator Placement-->
+          <placement host_id="0" vertex_id="1" computetime=".002"/>	 
+          <placement host_id="0" vertex_id="2" computetime=".002"/>
+          <placement host_id="0" vertex_id="3" computetime=".002"/>
+          <placement host_id="0" vertex_id="4" computetime=".002"/>
+          <placement host_id="0" vertex_id="5" computetime=".002"/>
+          <placement host_id="0" vertex_id="6" computetime=".002"/>
+          <placement host_id="0" vertex_id="7" computetime=".002"/>
+          <placement host_id="0" vertex_id="8" computetime=".002"/>
+          <placement host_id="0" vertex_id="9" computetime=".002"/>
+          <placement host_id="0" vertex_id="10" computetime=".002"/>
+</application>

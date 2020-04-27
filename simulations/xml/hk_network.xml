@@ -1,0 +1,65 @@
+<network>
+      <!--I don't know what 'type' and 'slots' indicate here so I left as default.-->
+      <!--cpu is the number of vCPU available-->
+	  <host id="0" type="2" cpu="32" mem="24000000000" cost="0" slots="-1"/>
+	  <host id="1" type="2" cpu="8" mem="8000000000" cost="0" slots="3"/>
+	  <host id="2" type="2" cpu="8" mem="8000000000" cost="0" slots="3"/>
+	  <host id="3" type="2" cpu="8" mem="8000000000" cost="0" slots="3"/>
+	  <host id="4" type="2" cpu="4" mem="4000000000" cost="0" slots="3"/>
+	  <host id="5" type="2" cpu="4" mem="4000000000" cost="0" slots="3"/>
+	  <host id="6" type="2" cpu="4" mem="4000000000" cost="0" slots="3"/>
+	  <host id="7" type="2" cpu="4" mem="4000000000" cost="0" slots="3"/>
+	  <host id="8" type="2" cpu="4" mem="4000000000" cost="0" slots="3"/>
+	  <host id="9" type="2" cpu="4" mem="4000000000" cost="0" slots="3"/>
+          <host id="10" type="2" cpu="1" mem="4000000000" cost="0" slots="3"/>
+    
+      <!--I assume the latency is in sec-->
+	  <link id ="0" bandwidth="100000000" latency=".072" src_id="0" dst_id="1" cost="0"/>	
+	  <link id ="1" bandwidth="100000000" latency=".072" src_id="1" dst_id="0" cost="0"/>
+	  
+	  <link id ="2" bandwidth="100000000" latency=".051" src_id="0" dst_id="2" cost="0"/>	
+	  <link id ="3" bandwidth="100000000" latency=".051" src_id="2" dst_id="0" cost="0"/>
+	  
+	  <link id ="4" bandwidth="100000000" latency=".066" src_id="0" dst_id="3" cost="0"/>	
+	  <link id ="5" bandwidth="100000000" latency=".066" src_id="3" dst_id="0" cost="0"/>
+	  	
+	  <link id ="6" bandwidth="100000000" latency=".012" src_id="1" dst_id="4" cost="0"/>	
+	  <link id ="7" bandwidth="100000000" latency=".012" src_id="4" dst_id="1" cost="0"/>	  	 
+	  
+	  <link id ="8" bandwidth="100000000" latency=".008" src_id="1" dst_id="5" cost="0"/>	
+	  <link id ="9" bandwidth="100000000" latency=".008" src_id="5" dst_id="1" cost="0"/>
+	  
+	  <link id ="10" bandwidth="100000000" latency=".016" src_id="2" dst_id="6" cost="0"/>	
+	  <link id ="11" bandwidth="100000000" latency=".016" src_id="6" dst_id="6" cost="0"/>
+	  
+	  <link id ="12" bandwidth="100000000" latency=".019" src_id="2" dst_id="7" cost="0"/>	
+	  <link id ="13" bandwidth="100000000" latency=".019" src_id="7" dst_id="2" cost="0"/>
+	  
+	  <link id ="14" bandwidth="100000000" latency=".019" src_id="3" dst_id="8" cost="0"/>	
+	  <link id ="15" bandwidth="100000000" latency=".019" src_id="8" dst_id="3" cost="0"/>
+	  
+	  <link id ="16" bandwidth="100000000" latency=".011" src_id="3" dst_id="9" cost="0"/>	
+	  <link id ="17" bandwidth="100000000" latency=".011" src_id="9" dst_id="3" cost="0"/>
+
+      <link id ="18" bandwidth="100000000" latency="0.0001" src_id="4" dst_id="10" cost="0"/>
+      <link id ="19" bandwidth="100000000" latency="0.0001" src_id="10" dst_id="4" cost="0"/>
+
+      <link id ="20" bandwidth="100000000" latency="0.0001" src_id="5" dst_id="10" cost="0"/>
+      <link id ="21" bandwidth="100000000" latency="0.0001" src_id="10" dst_id="5" cost="0"/>
+
+      <link id ="22" bandwidth="100000000" latency="0.0001" src_id="6" dst_id="10" cost="0"/>
+      <link id ="23" bandwidth="100000000" latency="0.0001" src_id="10" dst_id="6" cost="0"/>
+
+      <link id ="24" bandwidth="100000000" latency="0.0001" src_id="7" dst_id="10" cost="0"/>
+      <link id ="25" bandwidth="100000000" latency="0.0001" src_id="10" dst_id="7" cost="0"/>
+
+      <link id ="26" bandwidth="100000000" latency="0.0001" src_id="8" dst_id="10" cost="0"/>
+      <link id ="27" bandwidth="100000000" latency="0.0001" src_id="10" dst_id="8" cost="0"/>
+
+      <link id ="28" bandwidth="100000000" latency="0.0001" src_id="9" dst_id="10" cost="0"/>
+      <link id ="29" bandwidth="100000000" latency="0.0001" src_id="10" dst_id="9" cost="0"/>
+
+
+	  
+	  
+</network>

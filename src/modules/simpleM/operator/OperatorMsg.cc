@@ -12,13 +12,13 @@ OperatorMsg::OperatorMsg() {
 
 }
 
-void OperatorMsg::sendDataToHistory(cMessage* msg, simtime_t compTime,
+void OperatorMsg::sendDataToHistory(cMessage *msg, simtime_t compTime,
         bool bInput) {
     if (this->getSentEventRegs() <= Patterns::STATISTIC_MAX_REGS) {
-        cPacket* dataToSave = dynamic_cast<cPacket*>(msg);
+        cPacket *dataToSave = dynamic_cast<cPacket*>(msg);
 
         /*Save statistics*/
-        Statistic* statInput = new Statistic();
+        Statistic *statInput = new Statistic();
         statInput->setName("Operator Statistics");
         statInput->setKind(Patterns::MessageType::Statistics);
         statInput->setSTimestamp(simTime());
@@ -31,7 +31,7 @@ void OperatorMsg::sendDataToHistory(cMessage* msg, simtime_t compTime,
         statInput->setMsgSize(dataToSave->getByteLength());
 
         if (bInput) {
-            TopicEvent* topicEvent = dynamic_cast<TopicEvent*>(dataToSave);
+            TopicEvent *topicEvent = dynamic_cast<TopicEvent*>(dataToSave);
             simtime_t time = simTime() - topicEvent->getLastState();
             statInput->setCommTime(time);
         } else {
@@ -59,7 +59,7 @@ void OperatorMsg::sendDataToHistory(cMessage* msg, simtime_t compTime,
 void OperatorMsg::sendStateDataToHistory() {
     if (this->getSentStateRegs() <= Patterns::STATISTIC_MAX_REGS) {
         /*Save statistics*/
-        Statistic* statInput = new Statistic();
+        Statistic *statInput = new Statistic();
         statInput->setName("State Statistics");
         statInput->setKind(Patterns::MessageType::Statistics);
         statInput->setSTimestamp(simTime());
@@ -94,13 +94,14 @@ void OperatorMsg::initialize() {
     this->setAvailableCpu(par("availableCPU").doubleValue());
     this->setAvailableMem(par("availableMem").doubleValue());
     this->setTimeWindow(par("timeWindow").doubleValue());
+    this->setOperatorTime(par("operatorTime").doubleValue());
     this->setLogData(par("logData").boolValue());
 
     //Initialize the object state into the operator - TODO - different triggers
     if (this->getTimeWindow() > 0 && this->getInternalState() == nullptr) {
-        InternalState* internalState = new InternalState(
+        InternalState *internalState = new InternalState(
                 Patterns::InternalStateType::CountTrigger,
-                this->getTimeWindow() < 1 ? 1 :  this->getTimeWindow());
+                this->getTimeWindow() < 1 ? 1 : this->getTimeWindow());
         this->setInternalState(internalState);
 
     }
@@ -114,7 +115,7 @@ void OperatorMsg::initialize() {
                    << this->getAvailableMem() << " Time window: "
                    << this->getTimeWindow() << endl;
 
-    cMessage* msg = new cMessage(Patterns::MSG_INITIALISATION);
+    cMessage *msg = new cMessage(Patterns::MSG_INITIALISATION);
     msg->setKind(Patterns::MessageType::Topic);
     scheduleAt(simTime(), msg);
 }
@@ -133,7 +134,7 @@ void OperatorMsg::handleMessage(cMessage *msg) {
 
         //Send message for all out gates connected
         for (int i = 0; i < gateSize("queuePreviousOut"); ++i) {
-            cMessage* msgSend = new cMessage(Patterns::BASE_REQUEST);
+            cMessage *msgSend = new cMessage(Patterns::BASE_REQUEST);
             send(msgSend, "queuePreviousOut", i);
 
         }
@@ -150,9 +151,9 @@ void OperatorMsg::handleMessage(cMessage *msg) {
         this->processMsg(msg);
 
     } else {
-        if (this->isLogData()){
-        //Send information from arrival messages to statistics at the scheduler
-        this->sendDataToHistory(msg, 0, true);
+        if (this->isLogData()) {
+            //Send information from arrival messages to statistics at the scheduler
+            this->sendDataToHistory(msg, 0, true);
         }
 
         //If the operator is stateful then the compute time will be included into
@@ -171,7 +172,7 @@ void OperatorMsg::handleMessage(cMessage *msg) {
 
             this->refreshDisplay();
             //Increment the size of the state following the message size (bytes)
-            cPacket* rcvMsg = dynamic_cast<cPacket*>(msg);
+            cPacket *rcvMsg = dynamic_cast<cPacket*>(msg);
             this->getInternalState()->setBytesSize(
                     this->getInternalState()->getBytesSize()
                             + rcvMsg->getByteLength());
@@ -184,7 +185,7 @@ void OperatorMsg::handleMessage(cMessage *msg) {
             }
 
             //Convert message to be use for checking the crossed path
-            TopicEvent* topic = dynamic_cast<TopicEvent*>(rcvMsg);
+            TopicEvent *topic = dynamic_cast<TopicEvent*>(rcvMsg);
 
             //Evaluate the message to include it on the internal state
             //            if (this->getInternalState() != nullptr) {
@@ -196,7 +197,7 @@ void OperatorMsg::handleMessage(cMessage *msg) {
             //                    << to_string(topic->getCrossedPaths().size()) << endl;
             if (topic->getCrossedPaths().size() == 0
                     && this->getInternalState()->getFirstMessage() == nullptr) {
-                cMessage* dupMsg = dynamic_cast<cMessage*>(topic)->dup();
+                cMessage *dupMsg = dynamic_cast<cMessage*>(topic)->dup();
                 this->getInternalState()->setFirstMessage(dupMsg);
             } else {
                 //                cout << "Before filling internal state - operator - "
@@ -245,9 +246,9 @@ void OperatorMsg::processMsg(cMessage *msg) {
     int operatorId = this->getParentModule()->par("operatorId").intValue();
 
     if (!this->ApplyDiscarding(msg, operatorId)) {
-        TopicEvent* topic;
+        TopicEvent *topic;
         //Apply Data expansion or compression over the message bytes
-        cPacket* rcvMsg = dynamic_cast<cPacket*>(msg);
+        cPacket *rcvMsg = dynamic_cast<cPacket*>(msg);
         if (this->getInternalState() != nullptr) {
             //Correction to the size of the message, the message size is equal to the average size of the window
             rcvMsg->setByteLength(
@@ -347,9 +348,9 @@ void OperatorMsg::processMsg(cMessage *msg) {
         this->setProcessedEvents(this->getProcessedEvents() + 1);
         this->refreshDisplay();
 
-        if (this->isLogData()){
-        //Send data to the operator statistics
-        this->sendDataToHistory(topic, delayMsgQueue, false);
+        if (this->isLogData()) {
+            //Send data to the operator statistics
+            this->sendDataToHistory(topic, delayMsgQueue, false);
         }
         delete topic;
     }
@@ -362,7 +363,7 @@ cModule* OperatorMsg::getModuleOutput() {
     string pathModule =
             this->getParentModule()->getParentModule()->getFullPath()
                     + ".nodeOutput";
-    cModule* moduleOutput = this->getModuleByPath(pathModule.c_str());
+    cModule *moduleOutput = this->getModuleByPath(pathModule.c_str());
     return moduleOutput;
 }
 
@@ -433,7 +434,7 @@ InternalState*& OperatorMsg::getInternalState() {
     return mInternalState;
 }
 
-void OperatorMsg::setInternalState(InternalState*& internalState) {
+void OperatorMsg::setInternalState(InternalState *&internalState) {
     mInternalState = internalState;
 }
 
@@ -501,7 +502,7 @@ void OperatorMsg::setType(int type) {
     mType = type;
 }
 
-bool OperatorMsg::ApplyDiscarding(cMessage*& msg, int operatorId) {
+bool OperatorMsg::ApplyDiscarding(cMessage *&msg, int operatorId) {
     int iSelectivity = 0;
 
     if (this->getSelectivity() > 0 && this->getSelectivity() < 1
@@ -525,7 +526,7 @@ bool OperatorMsg::ApplyDiscarding(cMessage*& msg, int operatorId) {
     return false;
 }
 
-void OperatorMsg::ApplyDataExpansionCompression(cPacket*& msg) {
+void OperatorMsg::ApplyDataExpansionCompression(cPacket *&msg) {
     //Memory control - Free memory
     freeMemory(this->getParentModule()->getParentModule(),
             msg->getByteLength());
@@ -553,7 +554,7 @@ simtime_t OperatorMsg::getServiceDelay() {
     return delayMsgQueue;
 }
 
-bool OperatorMsg::ForwardMsg(TopicEvent*& topicEvent, simtime_t delayMsgQueue,
+bool OperatorMsg::ForwardMsg(TopicEvent *&topicEvent, simtime_t delayMsgQueue,
         int operatorId) {
 
     topicEvent->setKind(0);
@@ -567,7 +568,7 @@ bool OperatorMsg::ForwardMsg(TopicEvent*& topicEvent, simtime_t delayMsgQueue,
 
     for (unsigned int it = 0; it < operatorIndexes.size(); ++it) {
 
-        TopicEvent* tp = topicEvent->dup();
+        TopicEvent *tp = topicEvent->dup();
         tp->setNextState(
                 dynamic_cast<NodeOutput*>(this->getModuleOutput())->getRoutingTable().at(
                         operatorIndexes.at(it))->getNextProcessingOperatorId());
@@ -626,12 +627,17 @@ bool OperatorMsg::ForwardMsg(TopicEvent*& topicEvent, simtime_t delayMsgQueue,
 }
 
 void OperatorMsg::RequestMessageToQueue() {
-    cMessage* msgSend = new cMessage(Patterns::BASE_REQUEST);
+    cMessage *msgSend = new cMessage(Patterns::BASE_REQUEST);
     scheduleAt(simTime() + Patterns::TIME_INTERNAL_SCHEDULING, msgSend);
 }
 
-void OperatorMsg::ComputingOperation(cMessage* msg) {
-    simtime_t computingTime = this->getCpuCost() / this->getAvailableCpu();
+void OperatorMsg::ComputingOperation(cMessage *msg) {
+    simtime_t computingTime = 0;
+    if (this->getOperatorTime() > 0) {
+        computingTime = this->getOperatorTime();
+    } else {
+        computingTime = this->getCpuCost() / this->getAvailableCpu();
+    }
     //    cout << "Operator: "
     //            << to_string(this->getParentModule()->par("operatorId").intValue())
     //            << " Computation time: " << to_string(SIMTIME_DBL(computingTime)) << " CPU cost: "
@@ -639,6 +645,9 @@ void OperatorMsg::ComputingOperation(cMessage* msg) {
     //            << to_string(this->getAvailableCpu()) << endl;
 
     msg->setKind(4);
+//    simtime_t tt = simTime() + computingTime;
+//            cout << "Simul.: " << simTime() << " compute " << computingTime << " total " << tt << endl;
+
     scheduleAt(simTime() + computingTime, msg);
 }
 
@@ -664,6 +673,14 @@ bool OperatorMsg::isLogData() const {
 
 void OperatorMsg::setLogData(bool logData) {
     mLogData = logData;
+}
+
+double OperatorMsg::getOperatorTime() const {
+    return mOperatorTime;
+}
+
+void OperatorMsg::setOperatorTime(double operatorTime) {
+    mOperatorTime = operatorTime;
 }
 
 } //namespace

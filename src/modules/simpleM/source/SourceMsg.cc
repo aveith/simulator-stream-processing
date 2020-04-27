@@ -20,6 +20,7 @@ void SourceMsg::handleMessage(cMessage *msg) {
     //scheduleAt(simTime()+Patterns::TIME_INITIALISATION, msg);
     simtime_t rate = this->par("departureRate");
     simtime_t arrivalRate = 1 / rate;
+//    cout<< "Rate " << rate << endl;
 //        cout<< "Data source -> sending only a message to test dataflow" << endl;
     scheduleAt(simTime() + arrivalRate, msg);
     sendEvent();

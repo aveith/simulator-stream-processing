@@ -531,4 +531,11 @@ void Parameters::setCpuSinkMin(double cpuSinkMin) {
 
 } /* namespace fogstream */
 
+bool fogstream::Parameters::isRunIniOperatorPlacement() const {
+    return mRunIniOperatorPlacement;
+}
 
+void fogstream::Parameters::setRunIniOperatorPlacement(
+        bool runIniOperatorPlacement) {
+    mRunIniOperatorPlacement = runIniOperatorPlacement;
+}

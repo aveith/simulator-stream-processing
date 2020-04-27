@@ -120,6 +120,8 @@ private:
 
     vector<int> GetNumberMessagesPaths();
 
+    void GetLinkMappingRunningDirectly();
+
 protected:
     Parameters* mParameters;
     Env* mGenralEnv;

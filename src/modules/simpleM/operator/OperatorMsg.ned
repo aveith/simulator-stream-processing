@@ -24,6 +24,7 @@ simple OperatorMsg
         
         volatile double timeWindow = default(0);        
         volatile bool logData = default(false);     
+        volatile double operatorTime= default(0);
     gates:        
         input  queueNextIn[];
         output queueNextOut[];

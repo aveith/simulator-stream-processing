@@ -50,6 +50,8 @@ public:
     void setSentStateRegs(int sentStateRegs);
     bool isLogData() const;
     void setLogData(bool logData);
+    double getOperatorTime() const;
+    void setOperatorTime(double operatorTime);
 
 private:
     virtual void initialize();
@@ -92,6 +94,8 @@ protected:
     int mSentStateRegs = 0;
     int mSentEventRegs = 0;
     bool mLogData = false;
+
+    double mOperatorTime = 0;
 };
 
 } //namespace

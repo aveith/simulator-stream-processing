@@ -25,7 +25,10 @@ void StatisticsMCTS::addEventHistory(simtime_t sTimestamp, int iOperatorID,
     std::vector<event_history*> vFiltered;
     std::copy_if(this->getEventsHistory().begin(),
             this->getEventsHistory().end(), std::back_inserter(vFiltered),
-            [&](event_history* &ev) {return ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](event_history *&ev) {
+                return ev->bInput && ev->iHostID == iHostID
+                        && ev->iOperatorID == iOperatorID;
+            });
     //&& ev->iOperatorID == iOperatorID
     if (vFiltered.size() <= Patterns::STATISTIC_MAX_REGS) {
         this->getEventsHistory().push_back(
@@ -35,12 +38,30 @@ void StatisticsMCTS::addEventHistory(simtime_t sTimestamp, int iOperatorID,
     }
 }
 
+void StatisticsMCTS::addLinkUsageHistory(simtime_t sTimestamp,
+        int iHostID2, int iHostID, double dMsgSize) {
+    std::vector<link_history*> vFiltered;
+    std::copy_if(this->cLinkHistory.begin(), this->cLinkHistory.end(),
+            std::back_inserter(vFiltered),
+            [&](link_history *&ev) {
+                return ev->iHostID == iHostID
+                        && ev->iHostID2 == iHostID2;
+            });
+
+    if (vFiltered.size() <= Patterns::STATISTIC_MAX_REGS) {
+        this->getLinkHistory().push_back(
+                new link_history(sTimestamp, iHostID, iHostID2,
+                        dMsgSize));
+    }
+}
+
 void StatisticsMCTS::addQueueHistory(simtime_t sTimestamp, int iOperatorID,
         int iHostID, int iQueueSize, simtime_t sCommTime) {
     std::vector<queue_history*> vFiltered;
     std::copy_if(this->cQueueHistory.begin(), this->cQueueHistory.end(),
-            std::back_inserter(vFiltered),
-            [&](queue_history* &ev) {return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            std::back_inserter(vFiltered), [&](queue_history *&ev) {
+                return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() <= Patterns::STATISTIC_MAX_REGS) {
         this->getQueueHistory().push_back(
@@ -53,8 +74,9 @@ void StatisticsMCTS::addHostHistory(simtime_t sTimestamp, int iHostID,
         int iQueueSize, double dMsgSize) {
     std::vector<host_history*> vFiltered;
     std::copy_if(this->cHostHistory.begin(), this->cHostHistory.end(),
-            std::back_inserter(vFiltered),
-            [&](host_history* &ev) {return ev->iHostID == iHostID;});
+            std::back_inserter(vFiltered), [&](host_history *&ev) {
+                return ev->iHostID == iHostID;
+            });
 
     if (vFiltered.size() <= Patterns::STATISTIC_MAX_REGS) {
         this->getHostHistory().push_back(
@@ -66,8 +88,9 @@ void StatisticsMCTS::addStateHistory(simtime_t sTimestamp, int iOperatorID,
         int iHostID, double dStateSize, simtime_t dRequiredTime) {
     std::vector<state_history*> vFiltered;
     std::copy_if(this->getStateHistory().begin(), this->getStateHistory().end(),
-            std::back_inserter(vFiltered),
-            [&](state_history* &ev) {return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            std::back_inserter(vFiltered), [&](state_history *&ev) {
+                return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() <= Patterns::STATISTIC_MAX_REGS) {
 
@@ -84,13 +107,16 @@ double StatisticsMCTS::getOperatorArrivalMsgSize(int iHostID, int iOperatorID,
     std::copy_if(this->getEventsHistory().begin(),
             this->getEventsHistory().end(), std::back_inserter(vFiltered),
             //            [&](event_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
-            [&](event_history* &ev) {return ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](event_history *&ev) {
+                return ev->bInput && ev->iHostID == iHostID
+                        && ev->iOperatorID == iOperatorID;
+            });
     //&& ev->iOperatorID == iOperatorID
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                0, // start with first element
-                [] (double total, event_history* ev) {return total + ev->dMsgSize;})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), 0, // start with first element
+                [](double total, event_history *ev) {
+                    return total + ev->dMsgSize;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -102,11 +128,15 @@ double StatisticsMCTS::getOperatorArrivalRate(int iHostID, int iOperatorID,
     std::copy_if(this->getEventsHistory().begin(),
             this->getEventsHistory().end(), std::back_inserter(vFiltered),
             //            [&](event_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
-            [&](event_history* &ev) {return ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](event_history *&ev) {
+                return ev->bInput && ev->iHostID == iHostID
+                        && ev->iOperatorID == iOperatorID;
+            });
 
-    auto minmax =
-            std::minmax_element(vFiltered.begin(), vFiltered.end(),
-                    [] (event_history* lhs, event_history* rhs) {return lhs->sTimestamp < rhs->sTimestamp;});
+    auto minmax = std::minmax_element(vFiltered.begin(), vFiltered.end(),
+            [](event_history *lhs, event_history *rhs) {
+                return lhs->sTimestamp < rhs->sTimestamp;
+            });
 
     if (vFiltered.size() > 0) {
         //        cout << "Intial Time: " << SIMTIME_DBL((*minmax.first)->sTimestamp) << " End Time: " << SIMTIME_DBL((*minmax.second)->sTimestamp) << " Size: " << to_string(vFiltered.size()) << endl;
@@ -127,13 +157,17 @@ simtime_t StatisticsMCTS::getOperatorCompTime(int iHostID, int iOperatorID,
     std::copy_if(this->cEventsHistory.begin(), this->cEventsHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](event_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && !ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
-            [&](event_history* &ev) {return !ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](event_history *&ev) {
+                return !ev->bInput && ev->iHostID == iHostID
+                        && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() > 0) {
         return std::accumulate(vFiltered.begin(), vFiltered.end(),
                 (simtime_t) 0, // start with first element
-                [] (simtime_t total, event_history* ev) {return total + ev->sCompTime;})
-                / vFiltered.size();
+                [](simtime_t total, event_history *ev) {
+                    return total + ev->sCompTime;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -145,13 +179,15 @@ double StatisticsMCTS::getOperatorQueueSize(int iHostID, int iOperatorID,
     std::copy_if(this->cQueueHistory.begin(), this->cQueueHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](queue_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
-            [&](queue_history* &ev) {return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](queue_history *&ev) {
+                return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                (double) 0, // start with first element
-                [] (double total, queue_history* ev) {return total + (double)ev->iQueueSize;})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), (double) 0, // start with first element
+                [](double total, queue_history *ev) {
+                    return total + (double) ev->iQueueSize;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -163,13 +199,16 @@ double StatisticsMCTS::getOperatorOutputMsgSize(int iHostID, int iOperatorID,
     std::copy_if(this->cEventsHistory.begin(), this->cEventsHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](event_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && !ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
-            [&](event_history* &ev) {return !ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](event_history *&ev) {
+                return !ev->bInput && ev->iHostID == iHostID
+                        && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                0, // start with first element
-                [] (double total, event_history* ev) {return total + ev->dMsgSize;})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), 0, // start with first element
+                [](double total, event_history *ev) {
+                    return total + ev->dMsgSize;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -181,11 +220,15 @@ double StatisticsMCTS::getOperatorOutputRate(int iHostID, int iOperatorID,
     std::copy_if(this->cEventsHistory.begin(), this->cEventsHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](event_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && !ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
-            [&](event_history* &ev) {return !ev->bInput && ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            [&](event_history *&ev) {
+                return !ev->bInput && ev->iHostID == iHostID
+                        && ev->iOperatorID == iOperatorID;
+            });
 
-    auto minmax =
-            std::minmax_element(vFiltered.begin(), vFiltered.end(),
-                    [] (event_history* &lhs, event_history* &rhs) {return lhs->sTimestamp < rhs->sTimestamp;});
+    auto minmax = std::minmax_element(vFiltered.begin(), vFiltered.end(),
+            [](event_history *&lhs, event_history *&rhs) {
+                return lhs->sTimestamp < rhs->sTimestamp;
+            });
 
     if (vFiltered.size() > 0) {
         //        return vFiltered.size() / (sEnd - sBegin);
@@ -206,13 +249,15 @@ double StatisticsMCTS::getHostArrivalMsgSize(int iHostID, simtime_t sBegin,
     std::copy_if(this->cHostHistory.begin(), this->cHostHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](host_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iHostID == iHostID;});
-            [&](host_history* &ev) {return ev->iHostID == iHostID;});
+            [&](host_history *&ev) {
+                return ev->iHostID == iHostID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                0, // start with first element
-                [] (double total, host_history* ev) {return total + ev->dMsgSize;})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), 0, // start with first element
+                [](double total, host_history *ev) {
+                    return total + ev->dMsgSize;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -224,11 +269,14 @@ double StatisticsMCTS::getHostArrivalRate(int iHostID, simtime_t sBegin,
     std::copy_if(this->cHostHistory.begin(), this->cHostHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](host_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iHostID == iHostID;});
-            [&](host_history* &ev) {return ev->iHostID == iHostID;});
+            [&](host_history *&ev) {
+                return ev->iHostID == iHostID;
+            });
 
-    auto minmax =
-            std::minmax_element(vFiltered.begin(), vFiltered.end(),
-                    [] (host_history* & lhs, host_history*& rhs) {return lhs->sTimestamp < rhs->sTimestamp;});
+    auto minmax = std::minmax_element(vFiltered.begin(), vFiltered.end(),
+            [](host_history *&lhs, host_history *&rhs) {
+                return lhs->sTimestamp < rhs->sTimestamp;
+            });
 
     if (vFiltered.size() > 0) {
         //        return vFiltered.size() / (sEnd - sBegin);
@@ -261,13 +309,15 @@ double StatisticsMCTS::getHostQueueSize(int iHostID, simtime_t sBegin,
     std::copy_if(this->cHostHistory.begin(), this->cHostHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](host_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iHostID == iHostID;});
-            [&](host_history* &ev) {return ev->iHostID == iHostID;});
+            [&](host_history *&ev) {
+                return ev->iHostID == iHostID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                (double) 0, // start with first element
-                [] (double total, host_history* ev) {return total + (double)ev->iQueueSize;})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), (double) 0, // start with first element
+                [](double total, host_history *ev) {
+                    return total + (double) ev->iQueueSize;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -279,13 +329,15 @@ simtime_t StatisticsMCTS::getPathTime(int iPathID, simtime_t sBegin,
     std::copy_if(this->cPathHistory.begin(), this->cPathHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](path_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iPathID == iPathID;});
-            [&](path_history* &ev) {return ev->iPathID == iPathID;});
+            [&](path_history *&ev) {
+                return ev->iPathID == iPathID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                (double) 0, // start with first element
-                [] (double total, path_history* ev) {return total + SIMTIME_DBL(ev->sTime);})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), (double) 0, // start with first element
+                [](double total, path_history *ev) {
+                    return total + SIMTIME_DBL(ev->sTime);
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -297,13 +349,15 @@ double StatisticsMCTS::getPathCommTime(int iPathID, simtime_t sBegin,
     std::copy_if(this->cPathHistory.begin(), this->cPathHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](path_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iPathID == iPathID;});
-            [&](path_history* &ev) {return ev->iPathID == iPathID;});
+            [&](path_history *&ev) {
+                return ev->iPathID == iPathID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                (double) 0, // start with first element
-                [] (double total, path_history* ev) {return total +SIMTIME_DBL( ev->sCommunicationTime);})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), (double) 0, // start with first element
+                [](double total, path_history *ev) {
+                    return total + SIMTIME_DBL(ev->sCommunicationTime);
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -315,13 +369,15 @@ double StatisticsMCTS::getPathCompTime(int iPathID, simtime_t sBegin,
     std::copy_if(this->cPathHistory.begin(), this->cPathHistory.end(),
             std::back_inserter(vFiltered),
             //            [&](path_history* &ev) {return ev->sTimestamp >= sBegin && ev->sTimestamp <=sEnd && ev->iPathID == iPathID;});
-            [&](path_history* &ev) {return ev->iPathID == iPathID;});
+            [&](path_history *&ev) {
+                return ev->iPathID == iPathID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                (double) 0, // start with first element
-                [] (double total, path_history* ev) {return total + SIMTIME_DBL(ev->sComputationTime);})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), (double) 0, // start with first element
+                [](double total, path_history *ev) {
+                    return total + SIMTIME_DBL(ev->sComputationTime);
+                }) / vFiltered.size();
     } else {
         return 0;
     }
@@ -344,7 +400,7 @@ double StatisticsMCTS::getSelectivity(int iHostID, int iOperatorID,
             / this->getOperatorArrivalRate(iHostID, iOperatorID, sBegin, sEnd);
 }
 
-void StatisticsMCTS::setLastSave(const simtime_t& lastSave) {
+void StatisticsMCTS::setLastSave(const simtime_t &lastSave) {
     cLastSave = lastSave;
 }
 
@@ -353,7 +409,7 @@ vector<state_history*>& StatisticsMCTS::getStateHistory() {
 }
 
 void StatisticsMCTS::setStateHistory(
-        const vector<state_history*>& stateHistory) {
+        const vector<state_history*> &stateHistory) {
     cStateHistory = stateHistory;
 }
 
@@ -362,7 +418,7 @@ vector<event_history*>& StatisticsMCTS::getEventsHistory() {
 }
 
 void StatisticsMCTS::setEventsHistory(
-        const vector<event_history*>& eventsHistory) {
+        const vector<event_history*> &eventsHistory) {
     cEventsHistory = eventsHistory;
 }
 
@@ -370,7 +426,7 @@ vector<host_history*>& StatisticsMCTS::getHostHistory() {
     return cHostHistory;
 }
 
-void StatisticsMCTS::setHostHistory(const vector<host_history*>& hostHistory) {
+void StatisticsMCTS::setHostHistory(const vector<host_history*> &hostHistory) {
     cHostHistory = hostHistory;
 }
 
@@ -378,7 +434,7 @@ vector<path_history*>& StatisticsMCTS::getPathHistory() {
     return cPathHistory;
 }
 
-void StatisticsMCTS::setPathHistory(const vector<path_history*>& pathHistory) {
+void StatisticsMCTS::setPathHistory(const vector<path_history*> &pathHistory) {
     cPathHistory = pathHistory;
 }
 
@@ -387,7 +443,7 @@ vector<queue_history*>& StatisticsMCTS::getQueueHistory() {
 }
 
 void StatisticsMCTS::setQueueHistory(
-        const vector<queue_history*>& queueHistory) {
+        const vector<queue_history*> &queueHistory) {
     cQueueHistory = queueHistory;
 }
 
@@ -395,34 +451,44 @@ double StatisticsMCTS::getStateSize(int iHostID, int iOperatorID,
         simtime_t sBegin, simtime_t sEnd) {
     std::vector<state_history*> vFiltered;
     std::copy_if(this->getStateHistory().begin(), this->getStateHistory().end(),
-            std::back_inserter(vFiltered),
-            [&](state_history* &ev) {return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            std::back_inserter(vFiltered), [&](state_history *&ev) {
+                return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                0, // start with first element
-                [] (double total, state_history* ev) {return total + ev->dStateSize;})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), 0, // start with first element
+                [](double total, state_history *ev) {
+                    return total + ev->dStateSize;
+                }) / vFiltered.size();
     } else {
         return 0;
     }
 }
 
-double StatisticsMCTS::getStateRequireTimeBuildWindow(int iHostID, int iOperatorID,
-        simtime_t sBegin, simtime_t sEnd) {
+double StatisticsMCTS::getStateRequireTimeBuildWindow(int iHostID,
+        int iOperatorID, simtime_t sBegin, simtime_t sEnd) {
     std::vector<state_history*> vFiltered;
     std::copy_if(this->getStateHistory().begin(), this->getStateHistory().end(),
-            std::back_inserter(vFiltered),
-            [&](state_history* &ev) {return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;});
+            std::back_inserter(vFiltered), [&](state_history *&ev) {
+                return ev->iHostID == iHostID && ev->iOperatorID == iOperatorID;
+            });
 
     if (vFiltered.size() > 0) {
-        return std::accumulate(vFiltered.begin(), vFiltered.end(),
-                (double)0, // start with first element
-                [] (double total, state_history* ev) {return total + SIMTIME_DBL(ev->dRequiredTime);})
-                / vFiltered.size();
+        return std::accumulate(vFiltered.begin(), vFiltered.end(), (double) 0, // start with first element
+                [](double total, state_history *ev) {
+                    return total + SIMTIME_DBL(ev->dRequiredTime);
+                }) / vFiltered.size();
     } else {
         return 0;
     }
+}
+
+vector<link_history*>& StatisticsMCTS::getLinkHistory() {
+    return cLinkHistory;
+}
+
+void StatisticsMCTS::setLinkHistory(vector<link_history*> &linkHistory) {
+    cLinkHistory = linkHistory;
 }
 } /* namespace fogstream */
 

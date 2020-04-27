@@ -153,7 +153,7 @@ bool NodeOutput::SendMessageToNextOperator() {
             } else {
                 //If the channel is busy then the message is scheduled
                 //refresh the min value to be scheduled
-                cMessage* schMsg = new cMessage(Patterns::BASE_SCHEDULING);
+                cMessage *schMsg = new cMessage(Patterns::BASE_SCHEDULING);
                 schMsg->setKind(
                         Patterns::MessageType::IntercommunicationScheduling);
 
@@ -203,12 +203,12 @@ void NodeOutput::refreshDisplay() {
     this->getDisplayString().setTagArg("t", 0, buf);
 }
 
-void NodeOutput::sendDataToHistory(cMessage* msg) {
+void NodeOutput::sendDataToHistory(cMessage *msg) {
     if (this->getSentRegs() <= Patterns::STATISTIC_MAX_REGS) {
-        cPacket* dataToSave = dynamic_cast<cPacket*>(msg);
+        cPacket *dataToSave = dynamic_cast<cPacket*>(msg);
 
         /*Save statistics*/
-        Statistic* statInput = new Statistic();
+        Statistic *statInput = new Statistic();
         statInput->setName("Host Statistics");
         statInput->setKind(Patterns::MessageType::Statistics);
         statInput->setSTimestamp(simTime());
@@ -221,22 +221,52 @@ void NodeOutput::sendDataToHistory(cMessage* msg) {
         statInput->setQueueSize(this->DetermineQueueSizes());
         this->setSentRegs(this->getSentRegs() + 1);
 
+        /*Save statistics*/
+        TopicEvent *rcvMsg = dynamic_cast<TopicEvent*>(msg);
+        Statistic *statInput2 = new Statistic();
+        if (((string) this->gate(GATE_NAME,
+                this->DetermineGateIndex(rcvMsg->getNextState(),
+                        rcvMsg->getNextSubState(), rcvMsg->getAppName()))->getNextGate()->getNextGate()->getOwnerModule()->getName()).find(
+                "vertex") == std::string::npos) {
+            statInput2->setName("Link Statistics");
+            statInput2->setKind(Patterns::MessageType::Statistics);
+            statInput2->setSTimestamp(simTime());
+            statInput2->setType(Patterns::StatisticType::LinkUsage);
+
+            statInput2->setHostID(
+                    this->getParentModule()->par("id").intValue());
+            statInput2->setHostID2(
+                    this->gate(GATE_NAME,
+                            this->DetermineGateIndex(rcvMsg->getNextState(),
+                                    rcvMsg->getNextSubState(),
+                                    rcvMsg->getAppName()))->getNextGate()->getNextGate()->getOwnerModule()->par(
+                            "id").intValue());
+            statInput2->setMsgSize(dataToSave->getByteLength());
+        }
+
         std::string _module_name = "scheduler";
         for (int i = 0; i < this->gateSize(GATE_NAME); ++i) {
             if (opp_strcmp(_module_name.c_str(),
                     this->gate(GATE_NAME, i)->getNextGate()->getNextGate()->getOwnerModule()->getName())
                     == 0) {
                 send(statInput, GATE_NAME, i);
+                if (((string) this->gate(GATE_NAME,
+                        this->DetermineGateIndex(rcvMsg->getNextState(),
+                                rcvMsg->getNextSubState(),
+                                rcvMsg->getAppName()))->getNextGate()->getNextGate()->getOwnerModule()->getName()).find(
+                        "vertex") == std::string::npos) {
+                    send(statInput2, GATE_NAME, i);
+                }
                 break;
             }
         }
     }
 }
 
-void NodeOutput::ScheduleMessage(cMessage* msg) {
+void NodeOutput::ScheduleMessage(cMessage *msg) {
 
     //When message arrives, it is included into the working list
-    TopicEvent* rcvMsg = dynamic_cast<TopicEvent*>(msg);
+    TopicEvent *rcvMsg = dynamic_cast<TopicEvent*>(msg);
 
     int gateIndex = this->DetermineGateIndex(rcvMsg->getNextState(),
             rcvMsg->getNextSubState(), rcvMsg->getAppName());
@@ -254,7 +284,7 @@ void NodeOutput::ScheduleMessage(cMessage* msg) {
         this->refreshDisplay();
 
         //Schedule the message to be sent
-        cMessage* schMsg = new cMessage(Patterns::BASE_SCHEDULING);
+        cMessage *schMsg = new cMessage(Patterns::BASE_SCHEDULING);
         schMsg->setKind(Patterns::MessageType::IntercommunicationScheduling);
         scheduleAt(simTime(), schMsg);
     } else {
@@ -267,8 +297,8 @@ void NodeOutput::ScheduleMessage(cMessage* msg) {
 
 }
 
-cPacket * NodeOutput::ConsumeMsgFromWorkingList(cQueue * queue) {
-    cPacket* queuedConsumed;
+cPacket* NodeOutput::ConsumeMsgFromWorkingList(cQueue *queue) {
+    cPacket *queuedConsumed;
 
     //Get first message from the queue
     queuedConsumed = (cPacket*) queue->pop();
@@ -368,7 +398,7 @@ int NodeOutput::VerifyRoutingIndex(int nextProcessingOperatorId,
 }
 
 vector<int> NodeOutput::DefineNextOperatorsIndex(int nextOperatorId,
-        int nextFissionId, const char * appName) {
+        int nextFissionId, const char *appName) {
     vector<int> operators;
     for (unsigned int index = 0; index < this->getRoutingTable().size();
             index++) {
@@ -385,7 +415,7 @@ vector<int> NodeOutput::DefineNextOperatorsIndex(int nextOperatorId,
 }
 
 int NodeOutput::DetermineGateIndex(int nextProcessingOperatorId,
-        int nextProcessingFissionId, const char* appName) {
+        int nextProcessingFissionId, const char *appName) {
     for (unsigned int index = 0; index < this->getRoutingTable().size();
             index++) {
         if (this->getRoutingTable().at(index)->getAppName() == appName
@@ -399,12 +429,12 @@ int NodeOutput::DetermineGateIndex(int nextProcessingOperatorId,
     return -1;
 }
 
-void NodeOutput::setRoutingTable(const vector<RoutingData*>& routingTable) {
+void NodeOutput::setRoutingTable(const vector<RoutingData*> &routingTable) {
     mRoutingTable = routingTable;
 }
 
 void NodeOutput::setScheduledMessages(
-        unordered_map<int, cQueue*>& scheduledMessages) {
+        unordered_map<int, cQueue*> &scheduledMessages) {
     mScheduledMessages = scheduledMessages;
 }
 

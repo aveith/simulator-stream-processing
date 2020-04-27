@@ -37,7 +37,7 @@ public:
         Event, Queue
     };
     enum StatisticType {
-        Operator, Host, Link, Path, InternalState
+        Operator, Host, Link, Path, InternalState, LinkUsage
     };
     enum DeviceType {
         Sensor, Gateway, Cloud
@@ -62,7 +62,8 @@ public:
         ApplicationDeployment,
         ReconfigurationScheduling,
         Statistics,
-        IntercommunicationScheduling
+        IntercommunicationScheduling,
+        SaveSatistics
     };
 
     enum XMLLocations {
