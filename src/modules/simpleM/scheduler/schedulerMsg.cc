@@ -105,7 +105,8 @@ void SchedulerMsg::handleMessage(cMessage *msg) {
                 cMessage *appSaveStatistics = new cMessage("APP-0");
                 appSaveStatistics->setKind(
                         Patterns::MessageType::SaveSatistics);
-                scheduleAt(simTime() + 1005, appSaveStatistics);
+
+                scheduleAt(simTime() + 1060, appSaveStatistics);
             }
 
         } else {
@@ -116,10 +117,10 @@ void SchedulerMsg::handleMessage(cMessage *msg) {
             && msg->getKind() == Patterns::MessageType::SaveSatistics) {
         delete msg;
 
-        cout << "Save statistics" << endl;
         ofstream myfile;
         myfile.open(par("dir_result").stdstringValue() + "/path.txt");
 
+        myfile << "timestamp" << ";" << "path_id" << ";" << "time_ms" << "\n";
         for (unsigned int s = 0;
                 s < this->getStatistics()->getPathHistory().size(); s++) {
             myfile << this->getStatistics()->getPathHistory().at(s)->sTimestamp
@@ -132,6 +133,8 @@ void SchedulerMsg::handleMessage(cMessage *msg) {
         myfile.close();
 
         myfile.open(par("dir_result").stdstringValue() + "/link.txt");
+        myfile << "timestamp" << ";" << "link_id" << ";" << "message_bytes"
+                << "\n";
         for (unsigned int s = 0;
                 s < this->getStatistics()->getLinkHistory().size(); s++) {
 
@@ -155,6 +158,11 @@ void SchedulerMsg::handleMessage(cMessage *msg) {
 
         }
         myfile.close();
+
+        cMessage *appSaveStatistics = new cMessage("APP-0");
+        appSaveStatistics->setKind(Patterns::MessageType::SaveSatistics);
+
+        scheduleAt(simTime() + 1060, appSaveStatistics);
 
     } else if (msg->isSelfMessage()
             && msg->getKind()

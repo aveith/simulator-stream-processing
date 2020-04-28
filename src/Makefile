@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)fogStream
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -O out -I/usr/include/libxml2 -I. -I/opt/ibm/ILOG/CPLEX_Studio1271/cplex/include -I/opt/ibm/ILOG/CPLEX_Studio1271/concert -I/opt/ibm/ILOG/CPLEX_Studio1271/cpoptimizer/include -I/usr/include/libxml2/libxml -I/usr/include/libxml2
+#  opp_makemake --make-so -f --deep -O out -I/usr/include/libxml2 -I. -L/home/veith/Downloads/caffe/build/lib
 #
 
 # Name of target to be created (-o option)
@@ -10,20 +10,13 @@ TARGET = $(LIB_PREFIX)fogStream$(D)$(SHARED_LIB_SUFFIX)
 TARGET_DIR = .
 
 # C++ include paths (with -I)
-INCLUDE_PATH = \
-    -I/usr/include/libxml2 \
-    -I. \
-    -I/opt/ibm/ILOG/CPLEX_Studio1271/cplex/include \
-    -I/opt/ibm/ILOG/CPLEX_Studio1271/concert \
-    -I/opt/ibm/ILOG/CPLEX_Studio1271/cpoptimizer/include \
-    -I/usr/include/libxml2/libxml \
-    -I/usr/include/libxml2
+INCLUDE_PATH = -I/usr/include/libxml2 -I.
 
 # Additional object and library files to link with
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS =
+LIBS = $(LDFLAG_LIBPATH)/home/veith/Downloads/caffe/build/lib
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -127,6 +120,9 @@ include $(CONFIGFILE)
 
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = -loppenvir$D $(KERNEL_LIBS) $(SYS_LIBS)
+ifneq ($(TOOLCHAIN_NAME),clangc2)
+LIBS += -Wl,-rpath,$(abspath /home/veith/Downloads/caffe/build/lib)
+endif
 
 COPTS = $(CFLAGS) $(IMPORT_DEFINES)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
