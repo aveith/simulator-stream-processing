@@ -162,7 +162,7 @@ void SchedulerMsg::handleMessage(cMessage *msg) {
         cMessage *appSaveStatistics = new cMessage("APP-0");
         appSaveStatistics->setKind(Patterns::MessageType::SaveSatistics);
 
-        scheduleAt(simTime() + 1060, appSaveStatistics);
+        scheduleAt(simTime() + 60, appSaveStatistics);
 
     } else if (msg->isSelfMessage()
             && msg->getKind()
